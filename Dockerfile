@@ -1,0 +1,65 @@
+ARG BASE_IMAGE=pytorch/pytorch:2.5.1-cuda12.4-cudnn9-runtime
+FROM ${BASE_IMAGE}
+
+ARG DEBIAN_FRONTEND=noninteractive
+ARG COMFYUI_REPO=https://github.com/comfyanonymous/ComfyUI.git
+ARG COMFYUI_REF=master
+ARG COMFYUI_MANAGER_REPO=https://github.com/ltdrdata/ComfyUI-Manager.git
+ARG COMFYUI_MANAGER_REF=main
+ARG CUSTOM_NODES_FILE=/opt/config/stable-custom-nodes.txt
+ARG RUN_CUSTOM_NODE_INSTALL_PY=1
+
+ENV COMFYUI_DIR=/opt/ComfyUI \
+    VENV_DIR=/opt/venv \
+    SCRIPTS_DIR=/opt/scripts \
+    WORKSPACE_DIR=/workspace \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PATH="/opt/venv/bin:${PATH}"
+
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      awscli \
+      ca-certificates \
+      curl \
+      ffmpeg \
+      git \
+      libgl1 \
+      libglib2.0-0 \
+      libgomp1 \
+      libsm6 \
+      libxext6 \
+      libxrender1 \
+      openssh-client \
+      python3-venv \
+      rsync \
+      tini \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN python -m venv --system-site-packages "${VENV_DIR}" \
+    && "${VENV_DIR}/bin/pip" install --upgrade pip setuptools wheel
+
+RUN git clone "${COMFYUI_REPO}" "${COMFYUI_DIR}" \
+    && cd "${COMFYUI_DIR}" \
+    && git checkout "${COMFYUI_REF}" \
+    && pip install -r requirements.txt
+
+RUN mkdir -p "${COMFYUI_DIR}/custom_nodes" \
+    && git clone "${COMFYUI_MANAGER_REPO}" "${COMFYUI_DIR}/custom_nodes/ComfyUI-Manager" \
+    && cd "${COMFYUI_DIR}/custom_nodes/ComfyUI-Manager" \
+    && git checkout "${COMFYUI_MANAGER_REF}" \
+    && if [[ -f requirements.txt ]]; then pip install -r requirements.txt; fi
+
+COPY scripts/ "${SCRIPTS_DIR}/"
+COPY config/ /opt/config/
+
+RUN chmod +x "${SCRIPTS_DIR}"/*.sh \
+    && "${SCRIPTS_DIR}/install-custom-nodes.sh" "${CUSTOM_NODES_FILE}" \
+    && mkdir -p /workspace
+
+WORKDIR ${COMFYUI_DIR}
+EXPOSE 8188
+
+ENTRYPOINT ["/usr/bin/tini", "--"]
+CMD ["/opt/scripts/start.sh"]

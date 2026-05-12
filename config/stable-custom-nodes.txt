@@ -1,0 +1,14 @@
+# Format: <git-url> <target-directory> [git-ref]
+#
+# Use "-" for the ref to keep the repository default branch.
+# Prefer commit SHAs later when you want a fully reproducible build.
+https://github.com/cubiq/ComfyUI_essentials.git ComfyUI_essentials main
+https://github.com/yolain/ComfyUI-Easy-Use.git ComfyUI-Easy-Use main
+https://github.com/ltdrdata/ComfyUI-Impact-Pack.git ComfyUI-Impact-Pack Main
+https://github.com/ltdrdata/ComfyUI-Impact-Subpack.git ComfyUI-Impact-Subpack main
+https://github.com/kijai/ComfyUI-KJNodes.git ComfyUI-KJNodes main
+https://github.com/kijai/ComfyUI-WanVideoWrapper.git ComfyUI-WanVideoWrapper main
+https://github.com/rgthree/rgthree-comfy.git rgthree-comfy main
+https://github.com/numz/ComfyUI-SeedVR2_VideoUpscaler.git seedvr2_videoupscaler main
+#
+# TODO: Add ComfyUI-RunpodDirect once its canonical repository URL is confirmed.
