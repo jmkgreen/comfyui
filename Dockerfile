@@ -38,7 +38,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 RUN python -m venv --system-site-packages "${VENV_DIR}" \
-    && "${VENV_DIR}/bin/pip" install --upgrade pip setuptools wheel
+    && "${VENV_DIR}/bin/pip" install --upgrade pip setuptools wheel \
+    && "${VENV_DIR}/bin/pip" install jupyterlab ipywidgets
 
 RUN git clone "${COMFYUI_REPO}" "${COMFYUI_DIR}" \
     && cd "${COMFYUI_DIR}" \
@@ -59,7 +60,7 @@ RUN chmod +x "${SCRIPTS_DIR}"/*.sh \
     && mkdir -p /workspace
 
 WORKDIR ${COMFYUI_DIR}
-EXPOSE 8188
+EXPOSE 8188 8888
 
 ENTRYPOINT ["/usr/bin/tini", "--"]
 CMD ["/opt/scripts/start.sh"]

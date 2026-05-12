@@ -18,6 +18,11 @@ ENABLE_EXPERIMENTAL_CUSTOM_NODES="${ENABLE_EXPERIMENTAL_CUSTOM_NODES:-1}"
 COMFYUI_HOST="${COMFYUI_HOST:-0.0.0.0}"
 COMFYUI_PORT="${COMFYUI_PORT:-8188}"
 EXTRA_COMFYUI_ARGS="${EXTRA_COMFYUI_ARGS:-}"
+JUPYTER_ENABLE="${JUPYTER_ENABLE:-1}"
+JUPYTER_HOST="${JUPYTER_HOST:-0.0.0.0}"
+JUPYTER_PORT="${JUPYTER_PORT:-8888}"
+JUPYTER_ROOT_DIR="${JUPYTER_ROOT_DIR:-${WORKSPACE_DIR}}"
+JUPYTER_TOKEN="${JUPYTER_TOKEN:-}"
 
 mkdir -p \
   "${MODELS_DIR}" \
@@ -55,6 +60,26 @@ log "Models: ${MODELS_DIR}"
 log "Output: ${OUTPUT_DIR}"
 log "User data: ${USER_DIR}"
 log "Listening on ${COMFYUI_HOST}:${COMFYUI_PORT}"
+
+if [[ "${JUPYTER_ENABLE}" == "1" ]]; then
+  jupyter_args=(
+    lab
+    --no-browser
+    --allow-root
+    --ip="${JUPYTER_HOST}"
+    --port="${JUPYTER_PORT}"
+    --ServerApp.root_dir="${JUPYTER_ROOT_DIR}"
+  )
+
+  if [[ -n "${JUPYTER_TOKEN}" ]]; then
+    jupyter_args+=(--ServerApp.token="${JUPYTER_TOKEN}")
+  fi
+
+  log "Starting Jupyter Lab on ${JUPYTER_HOST}:${JUPYTER_PORT} with root ${JUPYTER_ROOT_DIR}"
+  jupyter "${jupyter_args[@]}" &
+else
+  log "Jupyter Lab disabled with JUPYTER_ENABLE=${JUPYTER_ENABLE}"
+fi
 
 # shellcheck disable=SC2086
 exec python "${COMFYUI_DIR}/main.py" \
