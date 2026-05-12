@@ -13,6 +13,7 @@ ENV COMFYUI_DIR=/opt/ComfyUI \
     VENV_DIR=/opt/venv \
     SCRIPTS_DIR=/opt/scripts \
     WORKSPACE_DIR=/workspace \
+    TINI_SUBREAPER=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
     PATH="/opt/venv/bin:${PATH}"
@@ -62,5 +63,5 @@ RUN chmod +x "${SCRIPTS_DIR}"/*.sh \
 WORKDIR ${COMFYUI_DIR}
 EXPOSE 8188 8888
 
-ENTRYPOINT ["/usr/bin/tini", "--"]
+ENTRYPOINT ["/usr/bin/tini", "-s", "--"]
 CMD ["/opt/scripts/start.sh"]

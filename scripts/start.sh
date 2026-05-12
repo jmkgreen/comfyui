@@ -31,6 +31,7 @@ mkdir -p \
   "${INPUT_DIR}" \
   "${OUTPUT_DIR}" \
   "${USER_DIR}" \
+  "${USER_DIR}/default" \
   "${WORKFLOWS_DIR}" \
   "${CONFIG_DIR}" \
   "${EXPERIMENTAL_CUSTOM_NODES_DIR}"
@@ -43,6 +44,11 @@ if [[ -L "${COMFYUI_DIR}/models" || -e "${COMFYUI_DIR}/models" ]]; then
   rm -rf "${COMFYUI_DIR}/models"
 fi
 ln -s "${MODELS_DIR}" "${COMFYUI_DIR}/models"
+
+if [[ -L "${COMFYUI_DIR}/user" || -e "${COMFYUI_DIR}/user" ]]; then
+  rm -rf "${COMFYUI_DIR}/user"
+fi
+ln -s "${USER_DIR}" "${COMFYUI_DIR}/user"
 
 if [[ "${ENABLE_EXPERIMENTAL_CUSTOM_NODES}" == "1" ]]; then
   mkdir -p "${COMFYUI_DIR}/custom_nodes"

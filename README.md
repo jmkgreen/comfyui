@@ -30,7 +30,7 @@ Persistent RunPod paths:
 /workspace/config
 ```
 
-At startup, `/opt/ComfyUI/models` is linked to `/workspace/models`, and ComfyUI is started with `/workspace/input`, `/workspace/output`, and `/workspace/user`.
+At startup, `/opt/ComfyUI/models` is linked to `/workspace/models`, `/opt/ComfyUI/user` is linked to `/workspace/user`, and ComfyUI is started with `/workspace/input`, `/workspace/output`, and `/workspace/user`.
 
 Jupyter Lab is also installed and starts on port `8888` by default, rooted at `/workspace`.
 
@@ -105,6 +105,8 @@ RunPod should expose port `8188` over HTTP for ComfyUI and port `8888` over HTTP
 If `JUPYTER_TOKEN` is unset, Jupyter uses its normal generated token and prints the access URL in the container logs. Set `JUPYTER_TOKEN` to a known value if you want predictable access through the RunPod web console.
 
 RunPod proxies Jupyter through a public hostname while the container sees an internal host and port. `JUPYTER_ALLOW_ORIGIN=*` and `JUPYTER_TRUST_XHEADERS=1` are enabled by default so Jupyter accepts the proxied login flow. Keep Jupyter token-protected when exposing port `8888`.
+
+The image runs `tini -s` as the entrypoint so child processes are reaped even if the container platform wraps the process tree. ComfyUI's image-local `user` path is also symlinked into `/workspace/user` because recent ComfyUI database initialization may still expect a writable `user` directory under the install path.
 
 ## Model Restore
 
