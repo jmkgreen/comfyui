@@ -96,11 +96,15 @@ JUPYTER_ENABLE=1
 JUPYTER_PORT=8888
 JUPYTER_ROOT_DIR=/workspace
 JUPYTER_TOKEN=
+JUPYTER_ALLOW_ORIGIN=*
+JUPYTER_TRUST_XHEADERS=1
 ```
 
 RunPod should expose port `8188` over HTTP for ComfyUI and port `8888` over HTTP for Jupyter Lab.
 
 If `JUPYTER_TOKEN` is unset, Jupyter uses its normal generated token and prints the access URL in the container logs. Set `JUPYTER_TOKEN` to a known value if you want predictable access through the RunPod web console.
+
+RunPod proxies Jupyter through a public hostname while the container sees an internal host and port. `JUPYTER_ALLOW_ORIGIN=*` and `JUPYTER_TRUST_XHEADERS=1` are enabled by default so Jupyter accepts the proxied login flow. Keep Jupyter token-protected when exposing port `8888`.
 
 ## Model Restore
 

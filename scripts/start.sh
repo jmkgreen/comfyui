@@ -23,6 +23,8 @@ JUPYTER_HOST="${JUPYTER_HOST:-0.0.0.0}"
 JUPYTER_PORT="${JUPYTER_PORT:-8888}"
 JUPYTER_ROOT_DIR="${JUPYTER_ROOT_DIR:-${WORKSPACE_DIR}}"
 JUPYTER_TOKEN="${JUPYTER_TOKEN:-}"
+JUPYTER_ALLOW_ORIGIN="${JUPYTER_ALLOW_ORIGIN:-*}"
+JUPYTER_TRUST_XHEADERS="${JUPYTER_TRUST_XHEADERS:-1}"
 
 mkdir -p \
   "${MODELS_DIR}" \
@@ -69,6 +71,8 @@ if [[ "${JUPYTER_ENABLE}" == "1" ]]; then
     --ip="${JUPYTER_HOST}"
     --port="${JUPYTER_PORT}"
     --ServerApp.root_dir="${JUPYTER_ROOT_DIR}"
+    --ServerApp.allow_origin="${JUPYTER_ALLOW_ORIGIN}"
+    --ServerApp.trust_xheaders="${JUPYTER_TRUST_XHEADERS}"
   )
 
   if [[ -n "${JUPYTER_TOKEN}" ]]; then
