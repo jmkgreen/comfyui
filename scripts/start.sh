@@ -36,9 +36,15 @@ mkdir -p \
   "${CONFIG_DIR}" \
   "${EXPERIMENTAL_CUSTOM_NODES_DIR}"
 
-if [[ ! -e "${CONFIG_DIR}/essential-models.txt" && -f /opt/config/essential-models.txt ]]; then
-  cp /opt/config/essential-models.txt "${CONFIG_DIR}/essential-models.txt"
-fi
+for config_file in \
+  essential-models.txt \
+  model_registry.csv \
+  model_path_rules.yaml \
+  source_policy.yaml; do
+  if [[ ! -e "${CONFIG_DIR}/${config_file}" && -f "/opt/config/${config_file}" ]]; then
+    cp "/opt/config/${config_file}" "${CONFIG_DIR}/${config_file}"
+  fi
+done
 
 if [[ -L "${COMFYUI_DIR}/models" || -e "${COMFYUI_DIR}/models" ]]; then
   rm -rf "${COMFYUI_DIR}/models"

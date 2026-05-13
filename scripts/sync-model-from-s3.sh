@@ -10,15 +10,15 @@ log() {
   printf '[sync-model-from-s3] %s\n' "$*"
 }
 
-S3_BUCKET="${S3_BUCKET:-}"
-S3_PREFIX="${S3_PREFIX:-comfyui}"
+S3_BUCKET="${MODEL_S3_BUCKET:-${S3_BUCKET:-}}"
+S3_PREFIX="${MODEL_S3_PREFIX:-${S3_PREFIX:-comfyui}}"
 MODELS_DIR="${MODELS_DIR:-/workspace/models}"
 DRY_RUN="${DRY_RUN:-0}"
 
-[[ -n "${S3_BUCKET}" ]] || die "Set S3_BUCKET to the bucket that stores your ComfyUI files."
+[[ -n "${S3_BUCKET}" ]] || die "Set MODEL_S3_BUCKET or S3_BUCKET to the bucket that stores your ComfyUI files."
 command -v aws >/dev/null 2>&1 || die "Missing required command: aws"
 
-[[ $# -ge 1 && $# -le 2 ]] || die "Usage: S3_BUCKET=my-bucket $0 <s3-relative-path> [local-relative-path]"
+[[ $# -ge 1 && $# -le 2 ]] || die "Usage: MODEL_S3_BUCKET=my-bucket $0 <s3-relative-path> [local-relative-path]"
 
 s3_relative="$1"
 local_relative="${2:-${s3_relative#models/}}"

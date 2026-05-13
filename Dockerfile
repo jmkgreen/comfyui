@@ -56,7 +56,7 @@ RUN mkdir -p "${COMFYUI_DIR}/custom_nodes" \
 COPY scripts/ "${SCRIPTS_DIR}/"
 COPY config/ /opt/config/
 
-RUN chmod +x "${SCRIPTS_DIR}"/*.sh \
+RUN chmod +x "${SCRIPTS_DIR}"/*.sh "${SCRIPTS_DIR}"/*.py \
     && "${SCRIPTS_DIR}/install-custom-nodes.sh" "${CUSTOM_NODES_FILE}" \
     && mkdir -p /workspace
 

@@ -4,7 +4,8 @@ Docker image and helper scripts for running ComfyUI on RunPod with:
 
 - ComfyUI and Python dependencies baked into the image.
 - RunPod network storage mounted at `/workspace` for models, outputs, inputs, workflows, config, and user data.
-- S3 as the long-term source of truth for models and optional backup target for generations.
+- Public canonical model URLs where available, with S3 reserved for private, gated, fragile, or manually mirrored models.
+- Optional S3 backup target for generations.
 
 Large model files are intentionally not stored in this repository or Docker image.
 
@@ -79,7 +80,7 @@ Current starter set:
 Minimum environment variables:
 
 ```text
-S3_BUCKET=your-bucket-name
+MODEL_S3_BUCKET=your-bucket-name
 AWS_ACCESS_KEY_ID=...
 AWS_SECRET_ACCESS_KEY=...
 AWS_DEFAULT_REGION=...
@@ -88,7 +89,13 @@ AWS_DEFAULT_REGION=...
 Optional environment variables:
 
 ```text
+MODEL_S3_PREFIX=comfyui
+S3_BUCKET=your-bucket-name
 S3_PREFIX=comfyui
+HF_TOKEN=
+CIVITAI_TOKEN=
+AWS_PROFILE=
+AWS_REGION=
 COMFYUI_PORT=8188
 EXTRA_COMFYUI_ARGS=
 ENABLE_EXPERIMENTAL_CUSTOM_NODES=1
@@ -108,27 +115,45 @@ RunPod proxies Jupyter through a public hostname while the container sees an int
 
 The image runs `tini -s` as the entrypoint so child processes are reaped even if the container platform wraps the process tree. ComfyUI's image-local `user` path is also symlinked into `/workspace/user` because recent ComfyUI database initialization may still expect a writable `user` directory under the install path.
 
-## Model Restore
+`MODEL_S3_BUCKET` is the preferred bucket environment variable for model resolver scripts. `S3_BUCKET` remains accepted as a compatibility alias. `MODEL_S3_PREFIX` defaults to `comfyui` when unset.
 
-Edit `/workspace/config/essential-models.txt` or this repo's `config/essential-models.txt`:
+## Model Resolution
 
-```text
-models/checkpoints/example.safetensors checkpoints/example.safetensors
-models/vae/example_vae.safetensors vae/example_vae.safetensors
-```
+Edit `/workspace/config/essential-models.txt` or this repo's `config/essential-models.txt` with one desired model filename per line. Blank lines and comments are ignored.
 
-Then run:
+Generate a reviewable CSV:
 
 ```bash
-S3_BUCKET=my-bucket /opt/scripts/ensure-models.sh
+HF_TOKEN=... python /opt/scripts/resolve_models.py \
+  --input /workspace/config/essential-models.txt \
+  --registry /workspace/config/model_registry.csv \
+  --rules /workspace/config/model_path_rules.yaml \
+  --source-policy /workspace/config/source_policy.yaml \
+  --output /workspace/config/models.resolved.csv
 ```
 
-With the default `S3_PREFIX=comfyui`, the first column is resolved under `s3://my-bucket/comfyui/`, and the second column is resolved under `/workspace/models/`.
+If `HF_TOKEN` is set, Hugging Face is searched at resolve time. If `--search-huggingface` is passed without `HF_TOKEN`, the resolver warns and falls back to registry/path inference. CivitAI search runs when needed if `CIVITAI_TOKEN` is set; otherwise the resolver logs why it was skipped.
+
+Review the generated CSV before download. Public Hugging Face files should normally keep their canonical Hugging Face URL and `mirror_policy=never`. Private, gated, fragile, or manually acquired files can use S3 placeholders such as:
+
+```text
+s3://${MODEL_S3_BUCKET}/${MODEL_S3_PREFIX}/models/loras/example.safetensors
+```
+
+Ensure reviewed models exist under `/workspace/models`:
+
+```bash
+MODEL_S3_BUCKET=my-bucket python /opt/scripts/ensure_models.py \
+  --manifest /workspace/config/models.resolved.csv \
+  --models-root /workspace/models
+```
+
+`ensure_models.py` skips files that already exist, restores from S3 first only when the source policy prefers S3, otherwise downloads from `canonical_url`, and verifies `sha256` when present. Pass `--dry-run` to preview actions. Pass `--mirror-after-download` to allow rows marked `mirror_after_download` to upload after a successful download.
 
 ## Sync One Model
 
 ```bash
-S3_BUCKET=my-bucket /opt/scripts/sync-model-from-s3.sh \
+MODEL_S3_BUCKET=my-bucket /opt/scripts/sync-model-from-s3.sh \
   models/checkpoints/new-model.safetensors \
   checkpoints/new-model.safetensors
 ```
@@ -136,24 +161,38 @@ S3_BUCKET=my-bucket /opt/scripts/sync-model-from-s3.sh \
 For prefixes, end the S3 path with `/`:
 
 ```bash
-S3_BUCKET=my-bucket /opt/scripts/sync-model-from-s3.sh \
+MODEL_S3_BUCKET=my-bucket /opt/scripts/sync-model-from-s3.sh \
   models/controlnet/ \
   controlnet
+```
+
+To manually mirror a local model and print a suggested registry row:
+
+```bash
+MODEL_S3_BUCKET=my-bucket python /opt/scripts/mirror_model_to_s3.py \
+  --file /workspace/models/loras/my-private-lora.safetensors \
+  --s3-uri 's3://${MODEL_S3_BUCKET}/${MODEL_S3_PREFIX}/models/loras/my-private-lora.safetensors' \
+  --source-url https://civitai.com/api/download/models/123456 \
+  --source-type civitai_gated
 ```
 
 ## Push Generations
 
 ```bash
-S3_BUCKET=my-bucket /opt/scripts/push-generations-to-s3.sh
+MODEL_S3_BUCKET=my-bucket /opt/scripts/sync_generations_to_s3.sh
 ```
 
 By default this writes to:
 
 ```text
-s3://my-bucket/comfyui/generations/YYYY-MM-DD/HHMMSS/
+s3://my-bucket/comfyui/generations/YYYY-MM-DD/
 ```
 
-Set `RUN_LABEL=my-session` to choose the final folder name.
+You can also pass an explicit base destination:
+
+```bash
+MODEL_S3_BUCKET=my-bucket /opt/scripts/sync_generations_to_s3.sh s3://my-bucket/comfyui/generations
+```
 
 ## Open Questions
 
