@@ -56,7 +56,7 @@ RUN git clone "${COMFYUI_REPO}" "${COMFYUI_DIR}" \
     && pip install -r requirements.txt
 
 RUN if [[ "${INSTALL_SAGEATTENTION}" == "1" ]]; then \
-      pip install "sageattention==${SAGEATTENTION_VERSION}" --no-build-isolation \
+      pip install "git+https://github.com/thu-ml/SageAttention.git@v${SAGEATTENTION_VERSION}" --no-build-isolation \
       && python -c "import sageattention; print('SageAttention import OK')"; \
     else \
       echo "Skipping SageAttention install because INSTALL_SAGEATTENTION=${INSTALL_SAGEATTENTION}"; \
