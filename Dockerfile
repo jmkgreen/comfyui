@@ -10,6 +10,7 @@ ARG CUSTOM_NODES_FILE=/opt/config/stable-custom-nodes.txt
 ARG RUN_CUSTOM_NODE_INSTALL_PY=1
 ARG INSTALL_SAGEATTENTION=1
 ARG SAGEATTENTION_VERSION=2.2.0
+ARG SAGEATTENTION_CUDA_ARCH_LIST="8.0;8.6;8.9;9.0"
 ARG ONNXRUNTIME_CUDA12_INDEX=https://aiinfra.pkgs.visualstudio.com/PublicPackages/_packaging/onnxruntime-cuda-12/pypi/simple/
 
 ENV COMFYUI_DIR=/opt/ComfyUI \
@@ -56,6 +57,7 @@ RUN git clone "${COMFYUI_REPO}" "${COMFYUI_DIR}" \
     && pip install -r requirements.txt
 
 RUN if [[ "${INSTALL_SAGEATTENTION}" == "1" ]]; then \
+      TORCH_CUDA_ARCH_LIST="${SAGEATTENTION_CUDA_ARCH_LIST}" \
       pip install "git+https://github.com/thu-ml/SageAttention.git@v${SAGEATTENTION_VERSION}" --no-build-isolation \
       && python -c "import sageattention; print('SageAttention import OK')"; \
     else \
