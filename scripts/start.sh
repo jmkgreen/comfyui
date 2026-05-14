@@ -18,6 +18,7 @@ ENABLE_EXPERIMENTAL_CUSTOM_NODES="${ENABLE_EXPERIMENTAL_CUSTOM_NODES:-1}"
 COMFYUI_HOST="${COMFYUI_HOST:-0.0.0.0}"
 COMFYUI_PORT="${COMFYUI_PORT:-8188}"
 EXTRA_COMFYUI_ARGS="${EXTRA_COMFYUI_ARGS:-}"
+ENABLE_SAGE_ATTENTION="${ENABLE_SAGE_ATTENTION:-auto}"
 JUPYTER_ENABLE="${JUPYTER_ENABLE:-1}"
 JUPYTER_HOST="${JUPYTER_HOST:-0.0.0.0}"
 JUPYTER_PORT="${JUPYTER_PORT:-8888}"
@@ -35,16 +36,6 @@ mkdir -p \
   "${WORKFLOWS_DIR}" \
   "${CONFIG_DIR}" \
   "${EXPERIMENTAL_CUSTOM_NODES_DIR}"
-
-for config_file in \
-  essential-models.txt \
-  model_registry.csv \
-  model_path_rules.yaml \
-  source_policy.yaml; do
-  if [[ ! -e "${CONFIG_DIR}/${config_file}" && -f "/opt/config/${config_file}" ]]; then
-    cp "/opt/config/${config_file}" "${CONFIG_DIR}/${config_file}"
-  fi
-done
 
 if [[ -L "${COMFYUI_DIR}/models" || -e "${COMFYUI_DIR}/models" ]]; then
   rm -rf "${COMFYUI_DIR}/models"
@@ -75,6 +66,28 @@ log "Output: ${OUTPUT_DIR}"
 log "User data: ${USER_DIR}"
 log "Listening on ${COMFYUI_HOST}:${COMFYUI_PORT}"
 
+sage_attention_args=()
+case "${ENABLE_SAGE_ATTENTION}" in
+  1|auto)
+    if python -c "import sageattention" >/dev/null 2>&1; then
+      sage_attention_args+=(--use-sage-attention)
+      log "SageAttention enabled."
+    elif [[ "${ENABLE_SAGE_ATTENTION}" == "1" ]]; then
+      log "ERROR: ENABLE_SAGE_ATTENTION=1 but the sageattention package is not importable."
+      exit 1
+    else
+      log "SageAttention package not found; continuing with ComfyUI's default attention backend."
+    fi
+    ;;
+  0|false|False|FALSE)
+    log "SageAttention disabled with ENABLE_SAGE_ATTENTION=${ENABLE_SAGE_ATTENTION}."
+    ;;
+  *)
+    log "ERROR: ENABLE_SAGE_ATTENTION must be auto, 1, or 0."
+    exit 1
+    ;;
+esac
+
 if [[ "${JUPYTER_ENABLE}" == "1" ]]; then
   jupyter_args=(
     lab
@@ -104,5 +117,6 @@ exec python "${COMFYUI_DIR}/main.py" \
   --input-directory "${INPUT_DIR}" \
   --output-directory "${OUTPUT_DIR}" \
   --user-directory "${USER_DIR}" \
+  "${sage_attention_args[@]}" \
   ${EXTRA_COMFYUI_ARGS} \
   "$@"

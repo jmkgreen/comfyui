@@ -13,6 +13,7 @@ die() {
 CUSTOM_NODES_FILE="${1:-/opt/config/stable-custom-nodes.txt}"
 COMFYUI_DIR="${COMFYUI_DIR:-/opt/ComfyUI}"
 RUN_CUSTOM_NODE_INSTALL_PY="${RUN_CUSTOM_NODE_INSTALL_PY:-1}"
+ONNXRUNTIME_CUDA12_INDEX="${ONNXRUNTIME_CUDA12_INDEX:-}"
 
 [[ -f "${CUSTOM_NODES_FILE}" ]] || die "Custom nodes file not found: ${CUSTOM_NODES_FILE}"
 command -v git >/dev/null 2>&1 || die "Missing required command: git"
@@ -47,7 +48,11 @@ while IFS= read -r line || [[ -n "${line}" ]]; do
 
   if [[ -f "${node_path}/requirements.txt" ]]; then
     log "Installing requirements for ${target_dir}"
-    pip install -r "${node_path}/requirements.txt"
+    pip_args=(install -r "${node_path}/requirements.txt")
+    if [[ "${target_dir}" == "comfyui_controlnet_aux" && -n "${ONNXRUNTIME_CUDA12_INDEX}" ]]; then
+      pip_args+=(--extra-index-url "${ONNXRUNTIME_CUDA12_INDEX}")
+    fi
+    pip "${pip_args[@]}"
   fi
 
   if [[ "${RUN_CUSTOM_NODE_INSTALL_PY}" == "1" && -f "${node_path}/install.py" ]]; then

@@ -3,11 +3,19 @@
 Docker image and helper scripts for running ComfyUI on RunPod with:
 
 - ComfyUI and Python dependencies baked into the image.
+- SageAttention installed in the image and auto-enabled when available.
 - RunPod network storage mounted at `/workspace` for models, outputs, inputs, workflows, config, and user data.
-- Public canonical model URLs where available, with S3 reserved for private, gated, fragile, or manually mirrored models.
-- Optional S3 backup target for generations.
+- A runtime that consumes a prepared `/workspace/models` directory.
 
 Large model files are intentionally not stored in this repository or Docker image.
+
+Model discovery, source resolution, and RunPod network-volume population are handled by the standalone adjacent project:
+
+```text
+../comfyui-s3-model-volume-tools
+```
+
+That tool can be run from a local PC, VM, or CI runner against the RunPod network volume's S3-compatible API, so a GPU pod does not need to be running just to prepare or repair model storage.
 
 ## Image Layout
 
@@ -47,12 +55,17 @@ Useful build arguments:
 docker build \
   --build-arg COMFYUI_REF=master \
   --build-arg COMFYUI_MANAGER_REF=main \
+  --build-arg INSTALL_SAGEATTENTION=1 \
+  --build-arg SAGEATTENTION_VERSION=2.2.0 \
+  --build-arg ONNXRUNTIME_CUDA12_INDEX=https://aiinfra.pkgs.visualstudio.com/PublicPackages/_packaging/onnxruntime-cuda-12/pypi/simple/ \
   -t comfyui-runpod .
 ```
 
 ComfyUI core currently uses `master` as its upstream default branch. The stable custom nodes in `config/stable-custom-nodes.txt` use `main`/default branches for early iteration.
 
-For a more reproducible image, set `COMFYUI_REF`, `COMFYUI_MANAGER_REF`, and custom node refs to commit SHAs instead of branches.
+The default base image is a CUDA devel image rather than a runtime-only image so CUDA extensions such as SageAttention can compile during the Docker build. If SageAttention is not wanted for a smaller image or for a GPU stack where it is not compatible, build with `--build-arg INSTALL_SAGEATTENTION=0`.
+
+For a more reproducible image, set `COMFYUI_REF`, `COMFYUI_MANAGER_REF`, custom node refs, and performance package versions to known-good values instead of floating branches or defaults.
 
 ## Stable Custom Nodes
 
@@ -71,33 +84,31 @@ Current starter set:
 - `ComfyUI-KJNodes`
 - `ComfyUI-WanVideoWrapper`
 - `rgthree-comfy`
+- `cg-use-everywhere`
 - `seedvr2_videoupscaler`
+- `ComfyUI-Crystools`
+- `ComfyUI_IPAdapter_plus`
+- `comfyui_controlnet_aux`
+- `ComfyUI-3D-Pack`
+- `ComfyUI-GGUF`
+- `ComfyUI-LTXVideo`
 
 `ComfyUI-RunpodDirect` is listed as a TODO until its canonical repository URL is confirmed.
 
-## RunPod Environment
+Stable node install notes:
 
-Minimum environment variables:
+- `comfyui_controlnet_aux` installs `onnxruntime-gpu`; CUDA 12 builds use `ONNXRUNTIME_CUDA12_INDEX`.
+- `ComfyUI-3D-Pack` runs its `install.py` during image build and needs compiler/CMake tooling for its prebuilt package selection and runtime JIT extension support.
+- `ComfyUI_IPAdapter_plus`, `ComfyUI-3D-Pack`, `ComfyUI-GGUF`, and `ComfyUI-LTXVideo` require workflow-specific model files under `/workspace/models`; those files stay out of the image and should be populated through the model-volume workflow.
 
-```text
-MODEL_S3_BUCKET=your-bucket-name
-AWS_ACCESS_KEY_ID=...
-AWS_SECRET_ACCESS_KEY=...
-AWS_DEFAULT_REGION=...
-```
+## RunPod Runtime Environment
 
 Optional environment variables:
 
 ```text
-MODEL_S3_PREFIX=comfyui
-S3_BUCKET=your-bucket-name
-S3_PREFIX=comfyui
-HF_TOKEN=
-CIVITAI_TOKEN=
-AWS_PROFILE=
-AWS_REGION=
 COMFYUI_PORT=8188
 EXTRA_COMFYUI_ARGS=
+ENABLE_SAGE_ATTENTION=auto
 ENABLE_EXPERIMENTAL_CUSTOM_NODES=1
 JUPYTER_ENABLE=1
 JUPYTER_PORT=8888
@@ -115,86 +126,48 @@ RunPod proxies Jupyter through a public hostname while the container sees an int
 
 The image runs `tini -s` as the entrypoint so child processes are reaped even if the container platform wraps the process tree. ComfyUI's image-local `user` path is also symlinked into `/workspace/user` because recent ComfyUI database initialization may still expect a writable `user` directory under the install path.
 
-`MODEL_S3_BUCKET` is the preferred bucket environment variable for model resolver scripts. `S3_BUCKET` remains accepted as a compatibility alias. `MODEL_S3_PREFIX` defaults to `comfyui` when unset.
+`ENABLE_SAGE_ATTENTION=auto` adds ComfyUI's `--use-sage-attention` flag only when the `sageattention` package imports successfully. Set it to `1` to require SageAttention and fail startup if it is missing, or `0` to force ComfyUI's default attention backend.
 
-## Model Resolution
-
-Edit `/workspace/config/essential-models.txt` or this repo's `config/essential-models.txt` with one desired model filename per line. Blank lines and comments are ignored.
-
-Generate a reviewable CSV:
+You can check optional accelerator availability inside a running container with:
 
 ```bash
-HF_TOKEN=... python /opt/scripts/resolve_models.py \
-  --input /workspace/config/essential-models.txt \
-  --registry /workspace/config/model_registry.csv \
-  --rules /workspace/config/model_path_rules.yaml \
-  --source-policy /workspace/config/source_policy.yaml \
-  --output /workspace/config/models.resolved.csv
+python /opt/scripts/check-performance-deps.py
 ```
 
-If `HF_TOKEN` is set, Hugging Face is searched at resolve time. If `--search-huggingface` is passed without `HF_TOKEN`, the resolver warns and falls back to registry/path inference. CivitAI search runs when needed if `CIVITAI_TOKEN` is set; otherwise the resolver logs why it was skipped.
+## Model Volume Preparation
 
-Review the generated CSV before download. Public Hugging Face files should normally keep their canonical Hugging Face URL and `mirror_policy=never`. Private, gated, fragile, or manually acquired files can use S3 placeholders such as:
+Prepare `/workspace/models` before starting the GPU pod with the standalone model-volume tool:
+
+```bash
+cd ../comfyui-s3-model-volume-tools
+python -m venv .venv
+source .venv/bin/activate
+pip install -e .
+```
+
+Typical workflow:
+
+```bash
+model-tools extract workflow.json --output wanted-models.csv
+model-tools resolve wanted-models.csv --output resolved-models.csv
+model-tools verify resolved-models.csv --target runpod-s3
+model-tools ensure resolved-models.csv --target runpod-s3
+```
+
+The object key contract is:
 
 ```text
-s3://${MODEL_S3_BUCKET}/${MODEL_S3_PREFIX}/models/loras/example.safetensors
+RunPod S3 key: models/unet/flux1-dev.safetensors
+Pod path:      /workspace/models/unet/flux1-dev.safetensors
 ```
 
-Ensure reviewed models exist under `/workspace/models`:
+See the standalone tool README for its S3 and source-token configuration.
 
-```bash
-MODEL_S3_BUCKET=my-bucket python /opt/scripts/ensure_models.py \
-  --manifest /workspace/config/models.resolved.csv \
-  --models-root /workspace/models
-```
+If the pod is already running while models are uploaded through the S3 API, ComfyUI may need a model refresh, workflow reload, or restart before newly uploaded files are visible.
 
-`ensure_models.py` skips files that already exist, restores from S3 first only when the source policy prefers S3, otherwise downloads from `canonical_url`, and verifies `sha256` when present. Pass `--dry-run` to preview actions. Pass `--mirror-after-download` to allow rows marked `mirror_after_download` to upload after a successful download.
-
-## Sync One Model
-
-```bash
-MODEL_S3_BUCKET=my-bucket /opt/scripts/sync-model-from-s3.sh \
-  models/checkpoints/new-model.safetensors \
-  checkpoints/new-model.safetensors
-```
-
-For prefixes, end the S3 path with `/`:
-
-```bash
-MODEL_S3_BUCKET=my-bucket /opt/scripts/sync-model-from-s3.sh \
-  models/controlnet/ \
-  controlnet
-```
-
-To manually mirror a local model and print a suggested registry row:
-
-```bash
-MODEL_S3_BUCKET=my-bucket python /opt/scripts/mirror_model_to_s3.py \
-  --file /workspace/models/loras/my-private-lora.safetensors \
-  --s3-uri 's3://${MODEL_S3_BUCKET}/${MODEL_S3_PREFIX}/models/loras/my-private-lora.safetensors' \
-  --source-url https://civitai.com/api/download/models/123456 \
-  --source-type civitai_gated
-```
-
-## Push Generations
-
-```bash
-MODEL_S3_BUCKET=my-bucket /opt/scripts/sync_generations_to_s3.sh
-```
-
-By default this writes to:
-
-```text
-s3://my-bucket/comfyui/generations/YYYY-MM-DD/
-```
-
-You can also pass an explicit base destination:
-
-```bash
-MODEL_S3_BUCKET=my-bucket /opt/scripts/sync_generations_to_s3.sh s3://my-bucket/comfyui/generations
-```
+Generated outputs remain under `/workspace/output`. Archive or sync them with external tooling, including `model-tools sync-generations` from the standalone model-volume project.
 
 ## Open Questions
 
 1. What is the canonical repository URL for `ComfyUI-RunpodDirect`?
-2. Should the model manifest grow checksum support before you rely on it heavily?
+2. Which additional performance accelerators should be baked in after SageAttention has a tested baseline?
