@@ -1,4 +1,4 @@
-ARG BASE_IMAGE=pytorch/pytorch:2.5.1-cuda12.4-cudnn9-devel
+ARG BASE_IMAGE=pytorch/pytorch:2.10.0-cuda12.8-cudnn9-devel
 FROM ${BASE_IMAGE}
 
 ARG DEBIAN_FRONTEND=noninteractive
@@ -9,8 +9,7 @@ ARG COMFYUI_MANAGER_REF=main
 ARG CUSTOM_NODES_FILE=/opt/config/stable-custom-nodes.txt
 ARG RUN_CUSTOM_NODE_INSTALL_PY=1
 ARG INSTALL_SAGEATTENTION=1
-ARG SAGEATTENTION_VERSION=2.2.0
-ARG SAGEATTENTION_CUDA_ARCH_LIST="8.6;8.9"
+ARG SAGEATTENTION_WHEEL_URL=https://github.com/Comfy-Org/wheels/releases/download/sageattention-latest/sageattention-2.2.0%2Bcu128torch2.10-cp312-cp312-manylinux_2_34_x86_64.manylinux_2_35_x86_64.whl
 ARG ONNXRUNTIME_CUDA12_INDEX=https://aiinfra.pkgs.visualstudio.com/PublicPackages/_packaging/onnxruntime-cuda-12/pypi/simple/
 
 ENV COMFYUI_DIR=/opt/ComfyUI \
@@ -57,8 +56,7 @@ RUN git clone "${COMFYUI_REPO}" "${COMFYUI_DIR}" \
     && pip install -r requirements.txt
 
 RUN if [[ "${INSTALL_SAGEATTENTION}" == "1" ]]; then \
-      TORCH_CUDA_ARCH_LIST="${SAGEATTENTION_CUDA_ARCH_LIST}" \
-      pip install "git+https://github.com/thu-ml/SageAttention.git@v${SAGEATTENTION_VERSION}" --no-build-isolation \
+      pip install "${SAGEATTENTION_WHEEL_URL}" \
       && python -c "import sageattention; print('SageAttention import OK')"; \
     else \
       echo "Skipping SageAttention install because INSTALL_SAGEATTENTION=${INSTALL_SAGEATTENTION}"; \

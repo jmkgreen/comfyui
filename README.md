@@ -56,14 +56,14 @@ docker build \
   --build-arg COMFYUI_REF=master \
   --build-arg COMFYUI_MANAGER_REF=main \
   --build-arg INSTALL_SAGEATTENTION=1 \
-  --build-arg SAGEATTENTION_VERSION=2.2.0 \
+  --build-arg SAGEATTENTION_WHEEL_URL=https://github.com/Comfy-Org/wheels/releases/download/sageattention-latest/sageattention-2.2.0%2Bcu128torch2.10-cp312-cp312-manylinux_2_34_x86_64.manylinux_2_35_x86_64.whl \
   --build-arg ONNXRUNTIME_CUDA12_INDEX=https://aiinfra.pkgs.visualstudio.com/PublicPackages/_packaging/onnxruntime-cuda-12/pypi/simple/ \
   -t comfyui-runpod .
 ```
 
 ComfyUI core currently uses `master` as its upstream default branch. The stable custom nodes in `config/stable-custom-nodes.txt` use `main`/default branches for early iteration.
 
-The default base image is a CUDA devel image rather than a runtime-only image so CUDA extensions such as SageAttention can compile during the Docker build. If SageAttention is not wanted for a smaller image or for a GPU stack where it is not compatible, build with `--build-arg INSTALL_SAGEATTENTION=0`.
+The default base image uses PyTorch 2.10 with CUDA 12.8 and Python 3.12. SageAttention is installed from a prebuilt Comfy wheel instead of compiling during the Docker build. If SageAttention is not wanted for a smaller image or for a GPU stack where it is not compatible, build with `--build-arg INSTALL_SAGEATTENTION=0`.
 
 For a more reproducible image, set `COMFYUI_REF`, `COMFYUI_MANAGER_REF`, custom node refs, and performance package versions to known-good values instead of floating branches or defaults.
 
