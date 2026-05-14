@@ -26,7 +26,6 @@ ENV COMFYUI_DIR=/opt/ComfyUI \
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-      awscli \
       build-essential \
       ca-certificates \
       cmake \
@@ -48,7 +47,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 RUN python -m venv --system-site-packages "${VENV_DIR}" \
     && "${VENV_DIR}/bin/pip" install --upgrade pip setuptools wheel \
-    && "${VENV_DIR}/bin/pip" install jupyterlab ipywidgets
+    && "${VENV_DIR}/bin/pip" install awscli jupyterlab ipywidgets
 
 RUN git clone "${COMFYUI_REPO}" "${COMFYUI_DIR}" \
     && cd "${COMFYUI_DIR}" \
