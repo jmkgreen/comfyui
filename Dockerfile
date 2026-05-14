@@ -10,7 +10,7 @@ ARG CUSTOM_NODES_FILE=/opt/config/stable-custom-nodes.txt
 ARG RUN_CUSTOM_NODE_INSTALL_PY=1
 ARG INSTALL_SAGEATTENTION=1
 ARG SAGEATTENTION_VERSION=2.2.0
-ARG SAGEATTENTION_CUDA_ARCH_LIST="8.0;8.6;8.9;9.0"
+ARG SAGEATTENTION_CUDA_ARCH_LIST="8.6;8.9"
 ARG ONNXRUNTIME_CUDA12_INDEX=https://aiinfra.pkgs.visualstudio.com/PublicPackages/_packaging/onnxruntime-cuda-12/pypi/simple/
 
 ENV COMFYUI_DIR=/opt/ComfyUI \
