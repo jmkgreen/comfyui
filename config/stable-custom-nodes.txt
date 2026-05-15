@@ -11,6 +11,8 @@ https://github.com/kijai/ComfyUI-WanVideoWrapper.git ComfyUI-WanVideoWrapper mai
 https://github.com/rgthree/rgthree-comfy.git rgthree-comfy main
 https://github.com/chrisgoringe/cg-use-everywhere.git cg-use-everywhere main
 https://github.com/numz/ComfyUI-SeedVR2_VideoUpscaler.git seedvr2_videoupscaler main
+https://github.com/vrgamegirl19/comfyui-vrgamedevgirl.git comfyui-vrgamedevgirl main
+https://github.com/ClownsharkBatwing/RES4LYF.git RES4LYF main
 https://github.com/crystian/ComfyUI-Crystools.git ComfyUI-Crystools main
 https://github.com/cubiq/ComfyUI_IPAdapter_plus.git ComfyUI_IPAdapter_plus main
 https://github.com/Fannovel16/comfyui_controlnet_aux.git comfyui_controlnet_aux main

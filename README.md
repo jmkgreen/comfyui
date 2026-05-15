@@ -86,6 +86,8 @@ Current starter set:
 - `rgthree-comfy`
 - `cg-use-everywhere`
 - `seedvr2_videoupscaler`
+- `comfyui-vrgamedevgirl`
+- `RES4LYF`
 - `ComfyUI-Crystools`
 - `ComfyUI_IPAdapter_plus`
 - `comfyui_controlnet_aux`
