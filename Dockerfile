@@ -47,10 +47,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       tini \
     && rm -rf /var/lib/apt/lists/*
 
-RUN printf 'urllib3>=1.26.18,<2\n' > "${PIP_CONSTRAINT}"
+RUN printf '%s\n' \
+      'requests>=2.32.5,<3' \
+      'urllib3>=1.26.18,<3' \
+      'charset-normalizer>=2,<4' \
+      'chardet>=3,<6' \
+      > "${PIP_CONSTRAINT}"
 
 RUN python -m venv --system-site-packages "${VENV_DIR}" \
     && "${VENV_DIR}/bin/pip" install --upgrade pip setuptools wheel \
+    && "${VENV_DIR}/bin/pip" install requests urllib3 charset-normalizer chardet \
     && "${VENV_DIR}/bin/pip" install awscli jupyterlab ipywidgets
 
 RUN git clone "${COMFYUI_REPO}" "${COMFYUI_DIR}" \

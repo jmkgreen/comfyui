@@ -65,6 +65,8 @@ ComfyUI core currently uses `master` as its upstream default branch. The stable 
 
 The default base image uses PyTorch 2.10 with CUDA 12.8 and Python 3.12. SageAttention is installed from a prebuilt Comfy wheel instead of compiling during the Docker build. The wheel is installed after stable custom-node requirements so the Docker build fails if a later dependency changes PyTorch to an incompatible version. If SageAttention is not wanted for a smaller image or for a GPU stack where it is not compatible, build with `--build-arg INSTALL_SAGEATTENTION=0`.
 
+The venv uses system site packages so it can share the PyTorch stack from the base image. The Dockerfile explicitly installs a matched Requests/urllib3/charset-normalizer/chardet stack into the venv to avoid importing an incompatible mix from the base and venv layers.
+
 For a more reproducible image, set `COMFYUI_REF`, `COMFYUI_MANAGER_REF`, custom node refs, and performance package versions to known-good values instead of floating branches or defaults.
 
 ## Stable Custom Nodes
