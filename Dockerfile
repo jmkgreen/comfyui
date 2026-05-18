@@ -52,6 +52,9 @@ RUN printf '%s\n' \
       'urllib3>=1.26.18,<3' \
       'charset-normalizer>=2,<4' \
       'chardet>=3,<6' \
+      'torch>=2.10,<2.11' \
+      'torchvision>=0.25,<0.26' \
+      'torchaudio>=2.10,<2.11' \
       > "${PIP_CONSTRAINT}"
 
 RUN python -m venv --system-site-packages "${VENV_DIR}" \
@@ -79,6 +82,8 @@ RUN find "${SCRIPTS_DIR}" -maxdepth 1 -type f \( -name '*.sh' -o -name '*.py' \)
     && mkdir -p /workspace
 
 RUN python -c "import warnings; warnings.filterwarnings('error', message='.*urllib3.*supported version.*'); import requests, urllib3; print(f'Requests: {requests.__version__}; urllib3: {urllib3.__version__}')"
+
+RUN python -c "import torch; assert torch.__version__.startswith('2.10.'), f'SageAttention wheel requires torch 2.10.x, got {torch.__version__}'; print(f'Torch: {torch.__version__}; CUDA: {torch.version.cuda}')"
 
 RUN if [[ "${INSTALL_SAGEATTENTION}" == "1" ]]; then \
       pip install --force-reinstall --no-deps "${SAGEATTENTION_WHEEL_URL}" \

@@ -67,6 +67,8 @@ The default base image uses PyTorch 2.10 with CUDA 12.8 and Python 3.12. SageAtt
 
 The venv uses system site packages so it can share the PyTorch stack from the base image. The Dockerfile explicitly installs a matched Requests/urllib3/charset-normalizer/chardet stack into the venv to avoid importing an incompatible mix from the base and venv layers.
 
+The Dockerfile also constrains `torch`, `torchvision`, and `torchaudio` to the PyTorch 2.10 image line because the default SageAttention wheel is compiled for CUDA 12.8 and Torch 2.10. The build validates the Torch version immediately before installing SageAttention so dependency drift fails with a clear error.
+
 For a more reproducible image, set `COMFYUI_REF`, `COMFYUI_MANAGER_REF`, custom node refs, and performance package versions to known-good values instead of floating branches or defaults.
 
 ## Stable Custom Nodes
