@@ -76,7 +76,7 @@ case "${ENABLE_SAGE_ATTENTION}" in
       log "ERROR: ENABLE_SAGE_ATTENTION=1 but the sageattention package is not importable."
       exit 1
     else
-      log "SageAttention package not found; continuing with ComfyUI's default attention backend."
+      log "SageAttention is not importable; continuing with ComfyUI's default attention backend."
     fi
     ;;
   0|false|False|FALSE)

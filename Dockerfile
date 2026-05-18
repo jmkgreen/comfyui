@@ -14,6 +14,7 @@ ARG ONNXRUNTIME_CUDA12_INDEX=https://aiinfra.pkgs.visualstudio.com/PublicPackage
 
 ENV COMFYUI_DIR=/opt/ComfyUI \
     VENV_DIR=/opt/venv \
+    PIP_CONSTRAINT=/opt/python-constraints.txt \
     SCRIPTS_DIR=/opt/scripts \
     WORKSPACE_DIR=/workspace \
     CUDA_HOME=/usr/local/cuda \
@@ -35,6 +36,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       libgl1 \
       libglib2.0-0 \
       libgomp1 \
+      libopengl0 \
       libsm6 \
       libxext6 \
       libxrender1 \
@@ -45,6 +47,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       tini \
     && rm -rf /var/lib/apt/lists/*
 
+RUN printf 'urllib3>=1.26.18,<2\n' > "${PIP_CONSTRAINT}"
+
 RUN python -m venv --system-site-packages "${VENV_DIR}" \
     && "${VENV_DIR}/bin/pip" install --upgrade pip setuptools wheel \
     && "${VENV_DIR}/bin/pip" install awscli jupyterlab ipywidgets
@@ -53,13 +57,6 @@ RUN git clone "${COMFYUI_REPO}" "${COMFYUI_DIR}" \
     && cd "${COMFYUI_DIR}" \
     && git checkout "${COMFYUI_REF}" \
     && pip install -r requirements.txt
-
-RUN if [[ "${INSTALL_SAGEATTENTION}" == "1" ]]; then \
-      pip install "${SAGEATTENTION_WHEEL_URL}" \
-      && python -c "import sageattention; print('SageAttention import OK')"; \
-    else \
-      echo "Skipping SageAttention install because INSTALL_SAGEATTENTION=${INSTALL_SAGEATTENTION}"; \
-    fi
 
 RUN mkdir -p "${COMFYUI_DIR}/custom_nodes" \
     && git clone "${COMFYUI_MANAGER_REPO}" "${COMFYUI_DIR}/custom_nodes/ComfyUI-Manager" \
@@ -72,7 +69,17 @@ COPY config/ /opt/config/
 
 RUN find "${SCRIPTS_DIR}" -maxdepth 1 -type f \( -name '*.sh' -o -name '*.py' \) -exec chmod +x {} + \
     && "${SCRIPTS_DIR}/install-custom-nodes.sh" "${CUSTOM_NODES_FILE}" \
+    && python "${SCRIPTS_DIR}/patch-numpy2-compat.py" \
     && mkdir -p /workspace
+
+RUN python -c "import warnings; warnings.filterwarnings('error', message='.*urllib3.*supported version.*'); import requests, urllib3; print(f'Requests: {requests.__version__}; urllib3: {urllib3.__version__}')"
+
+RUN if [[ "${INSTALL_SAGEATTENTION}" == "1" ]]; then \
+      pip install --force-reinstall --no-deps "${SAGEATTENTION_WHEEL_URL}" \
+      && python -c "import torch, sageattention; print(f'Torch: {torch.__version__}'); print('SageAttention import OK')"; \
+    else \
+      echo "Skipping SageAttention install because INSTALL_SAGEATTENTION=${INSTALL_SAGEATTENTION}"; \
+    fi
 
 WORKDIR ${COMFYUI_DIR}
 EXPOSE 8188 8888

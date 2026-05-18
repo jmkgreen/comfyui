@@ -63,7 +63,7 @@ docker build \
 
 ComfyUI core currently uses `master` as its upstream default branch. The stable custom nodes in `config/stable-custom-nodes.txt` use `main`/default branches for early iteration.
 
-The default base image uses PyTorch 2.10 with CUDA 12.8 and Python 3.12. SageAttention is installed from a prebuilt Comfy wheel instead of compiling during the Docker build. If SageAttention is not wanted for a smaller image or for a GPU stack where it is not compatible, build with `--build-arg INSTALL_SAGEATTENTION=0`.
+The default base image uses PyTorch 2.10 with CUDA 12.8 and Python 3.12. SageAttention is installed from a prebuilt Comfy wheel instead of compiling during the Docker build. The wheel is installed after stable custom-node requirements so the Docker build fails if a later dependency changes PyTorch to an incompatible version. If SageAttention is not wanted for a smaller image or for a GPU stack where it is not compatible, build with `--build-arg INSTALL_SAGEATTENTION=0`.
 
 For a more reproducible image, set `COMFYUI_REF`, `COMFYUI_MANAGER_REF`, custom node refs, and performance package versions to known-good values instead of floating branches or defaults.
 
@@ -101,6 +101,8 @@ Stable node install notes:
 
 - `comfyui_controlnet_aux` installs `onnxruntime-gpu`; CUDA 12 builds use `ONNXRUNTIME_CUDA12_INDEX`.
 - `ComfyUI-3D-Pack` runs its `install.py` during image build and needs compiler/CMake tooling for its prebuilt package selection and runtime JIT extension support.
+- `ComfyUI-3D-Pack` currently pulls `gpytoolbox`, which may still contain removed NumPy 2 aliases such as `np.Inf`; the image applies `scripts/patch-numpy2-compat.py` after custom-node installation instead of pinning all of NumPy below 2.0.
+- `ComfyUI-3D-Pack` mesh tooling can load PyMeshlab plugins that need `libOpenGL.so.0`; the image installs `libopengl0` in addition to `libgl1`.
 - `ComfyUI_IPAdapter_plus`, `ComfyUI-3D-Pack`, `ComfyUI-GGUF`, and `ComfyUI-LTXVideo` require workflow-specific model files under `/workspace/models`; those files stay out of the image and should be populated through the model-volume workflow.
 
 ## RunPod Runtime Environment
