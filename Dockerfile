@@ -78,6 +78,7 @@ COPY config/ /opt/config/
 
 RUN find "${SCRIPTS_DIR}" -maxdepth 1 -type f \( -name '*.sh' -o -name '*.py' \) -exec chmod +x {} + \
     && "${SCRIPTS_DIR}/install-custom-nodes.sh" "${CUSTOM_NODES_FILE}" \
+    && python "${SCRIPTS_DIR}/repair-3d-pack-deps.py" \
     && python "${SCRIPTS_DIR}/patch-numpy2-compat.py" \
     && mkdir -p /workspace
 
