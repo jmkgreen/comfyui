@@ -5,6 +5,11 @@ from __future__ import annotations
 
 import subprocess
 import sys
+from pathlib import Path
+
+
+COMFYUI_DIR = Path("/opt/ComfyUI")
+THREE_D_PACK_DIR = COMFYUI_DIR / "custom_nodes" / "ComfyUI-3D-Pack"
 
 
 def torch_cuda_tag() -> tuple[str, str]:
@@ -19,6 +24,10 @@ def torch_cuda_tag() -> tuple[str, str]:
 
 
 def main() -> int:
+    if not THREE_D_PACK_DIR.exists():
+        print(f"ComfyUI-3D-Pack not installed at {THREE_D_PACK_DIR}; skipping")
+        return 0
+
     torch_version, cuda_tag = torch_cuda_tag()
     pyg_wheel_url = f"https://data.pyg.org/whl/torch-{torch_version}+{cuda_tag}.html"
 

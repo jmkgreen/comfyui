@@ -88,7 +88,6 @@ Initial stable node set:
 - `ComfyUI-Crystools`
 - `ComfyUI_IPAdapter_plus`
 - `comfyui_controlnet_aux`
-- `ComfyUI-3D-Pack`
 - `ComfyUI-GGUF`
 - `ComfyUI-LTXVideo`
 
@@ -97,7 +96,7 @@ Stable node install notes:
 - `ComfyUI-Crystools`: install `requirements.txt`; GPU monitoring depends on NVIDIA/CUDA runtime visibility.
 - `ComfyUI_IPAdapter_plus`: no extra build step beyond clone, but IPAdapter and CLIP Vision models must be present under `/workspace/models`.
 - `comfyui_controlnet_aux`: install `requirements.txt`; CUDA 12 images should install `onnxruntime-gpu` through the CUDA 12 package index.
-- `ComfyUI-3D-Pack`: install `requirements.txt` and run `install.py` during image build; keep compiler, CMake, Ninja, CUDA tooling, and OpenGL runtime libraries available for package selection, PyMeshlab plugins, and runtime JIT extensions. Verify native PyTorch Geometric packages such as `torch-scatter` match the final Torch/CUDA stack before startup.
+- `ComfyUI-3D-Pack`: disabled from the default baked stable image until PyTorch3D and related native wheels match the Python 3.12 + Torch 2.10 + CUDA 12.8 image stack reliably. Test it only through an alternate custom-node list or experimental node mount.
 - `ComfyUI-GGUF`: install `requirements.txt`, primarily `gguf`, and place `.gguf` diffusion/text-encoder models under `/workspace/models`.
 - `ComfyUI-LTXVideo`: install `requirements.txt`; LTX model checkpoints, latent upscalers, LoRAs, and Gemma text encoder files remain model-volume contents.
 

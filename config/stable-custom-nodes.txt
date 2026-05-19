@@ -16,7 +16,9 @@ https://github.com/ClownsharkBatwing/RES4LYF.git RES4LYF main
 https://github.com/crystian/ComfyUI-Crystools.git ComfyUI-Crystools main
 https://github.com/cubiq/ComfyUI_IPAdapter_plus.git ComfyUI_IPAdapter_plus main
 https://github.com/Fannovel16/comfyui_controlnet_aux.git comfyui_controlnet_aux main
-https://github.com/MrForExample/ComfyUI-3D-Pack.git ComfyUI-3D-Pack main
+# Disabled from the baked stable image: PyTorch3D wheels currently do not match
+# the Python 3.12 + Torch 2.10 + CUDA 12.8 image stack reliably.
+# https://github.com/MrForExample/ComfyUI-3D-Pack.git ComfyUI-3D-Pack main
 https://github.com/city96/ComfyUI-GGUF.git ComfyUI-GGUF main
 https://github.com/Lightricks/ComfyUI-LTXVideo.git ComfyUI-LTXVideo master
 #

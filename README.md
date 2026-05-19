@@ -95,7 +95,6 @@ Current starter set:
 - `ComfyUI-Crystools`
 - `ComfyUI_IPAdapter_plus`
 - `comfyui_controlnet_aux`
-- `ComfyUI-3D-Pack`
 - `ComfyUI-GGUF`
 - `ComfyUI-LTXVideo`
 
@@ -104,11 +103,9 @@ Current starter set:
 Stable node install notes:
 
 - `comfyui_controlnet_aux` installs `onnxruntime-gpu`; CUDA 12 builds use `ONNXRUNTIME_CUDA12_INDEX`.
-- `ComfyUI-3D-Pack` runs its `install.py` during image build and needs compiler/CMake tooling for its prebuilt package selection and runtime JIT extension support.
-- `ComfyUI-3D-Pack` may install PyTorch Geometric wheels such as `torch-scatter` from an upstream Torch-specific index; the image repairs `torch-scatter` with `scripts/repair-3d-pack-deps.py` so the wheel matches the actual Torch/CUDA stack before startup.
-- `ComfyUI-3D-Pack` currently pulls `gpytoolbox`, which may still contain removed NumPy 2 aliases such as `np.Inf`; the image applies `scripts/patch-numpy2-compat.py` after custom-node installation instead of pinning all of NumPy below 2.0.
-- `ComfyUI-3D-Pack` mesh tooling can load PyMeshlab plugins that need `libOpenGL.so.0`; the image installs `libopengl0` in addition to `libgl1`.
-- `ComfyUI_IPAdapter_plus`, `ComfyUI-3D-Pack`, `ComfyUI-GGUF`, and `ComfyUI-LTXVideo` require workflow-specific model files under `/workspace/models`; those files stay out of the image and should be populated through the model-volume workflow.
+- `ComfyUI-3D-Pack` is intentionally disabled in `config/stable-custom-nodes.txt` for this image line. Its native PyTorch3D extension is not reliably compatible with the Python 3.12 + Torch 2.10 + CUDA 12.8 stack, and import-time failures can remove the whole node pack at startup.
+- `ComfyUI-3D-Pack` can be tested later through an alternate custom-node list or `/workspace/custom_nodes_experimental` when a compatible PyTorch3D build is available. If it is baked back in, `scripts/repair-3d-pack-deps.py` repairs `torch-scatter` for the active Torch/CUDA stack and `scripts/patch-numpy2-compat.py` handles known NumPy 2 alias issues.
+- `ComfyUI_IPAdapter_plus`, `ComfyUI-GGUF`, and `ComfyUI-LTXVideo` require workflow-specific model files under `/workspace/models`; those files stay out of the image and should be populated through the model-volume workflow.
 
 ## RunPod Runtime Environment
 
