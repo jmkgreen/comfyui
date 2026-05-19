@@ -37,10 +37,15 @@ def patch_package(package_name: str) -> int:
 
 
 def main() -> int:
+    import numpy as np
+
+    if importlib.util.find_spec("gpytoolbox") is None:
+        print(f"NumPy: {np.__version__}; gpytoolbox not installed")
+        return 0
+
     patch_package("gpytoolbox")
 
-    import numpy as np
-    import gpytoolbox
+    import gpytoolbox  # noqa: F401
 
     print(f"NumPy: {np.__version__}; gpytoolbox import OK")
     return 0
