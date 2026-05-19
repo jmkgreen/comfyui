@@ -156,9 +156,27 @@ Typical workflow:
 ```bash
 model-tools extract workflow.json --output wanted-models.csv
 model-tools resolve wanted-models.csv --output resolved-models.csv
+python scripts/prepare-workflow.py workflow.json \
+  --manifest resolved-models.csv \
+  --models-root /workspace/models \
+  --output workflow.prepared.json
 model-tools verify resolved-models.csv --target runpod-s3
 model-tools ensure resolved-models.csv --target runpod-s3
 ```
+
+`scripts/prepare-workflow.py` consumes the reviewed `resolved-models.csv` manifest and prepares
+the workflow for runtime use:
+
+- if a workflow references a model filename that the reviewed manifest maps to a different
+  `destination_path`, the workflow reference is updated to the reviewed filename;
+- if `--models-root` is provided, referenced manifest rows are checked under that model root
+  before the workflow is written;
+- `SaveImage` nodes are updated so `filename_prefix` includes ComfyUI's
+  `%date:yyyy-MM-dd%` token, producing output filenames under a `YYYY-MM-DD` date folder.
+
+Use `--in-place` to rewrite the workflow directly, or `--dry-run` to preview edits. If you
+have already verified the remote RunPod volume with `model-tools verify`, omit `--models-root`
+or pass `--allow-missing` when preparing locally without a mounted model volume.
 
 The object key contract is:
 
