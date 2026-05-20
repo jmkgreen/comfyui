@@ -26,6 +26,8 @@ def main() -> int:
     for module_name, display_name in PACKAGES.items():
         status = "available" if importlib.util.find_spec(module_name) else "missing"
         print(f"{display_name}: {status}")
+
+    print("Run /opt/scripts/check-sage-attention.py --smoke to verify SageAttention kernels on this GPU.")
     return 0
 
 

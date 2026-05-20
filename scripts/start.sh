@@ -80,14 +80,15 @@ log "Listening on ${COMFYUI_HOST}:${COMFYUI_PORT}"
 sage_attention_args=()
 case "${ENABLE_SAGE_ATTENTION}" in
   1|auto)
-    if python -c "import sageattention" >/dev/null 2>&1; then
+    sage_attention_check_args=(--smoke)
+    if python "${SCRIPTS_DIR:-/opt/scripts}/check-sage-attention.py" "${sage_attention_check_args[@]}"; then
       sage_attention_args+=(--use-sage-attention)
       log "SageAttention enabled."
     elif [[ "${ENABLE_SAGE_ATTENTION}" == "1" ]]; then
-      log "ERROR: ENABLE_SAGE_ATTENTION=1 but the sageattention package is not importable."
+      log "ERROR: ENABLE_SAGE_ATTENTION=1 but SageAttention failed validation."
       exit 1
     else
-      log "SageAttention is not importable; continuing with ComfyUI's default attention backend."
+      log "SageAttention failed validation; continuing with ComfyUI's default attention backend."
     fi
     ;;
   0|false|False|FALSE)

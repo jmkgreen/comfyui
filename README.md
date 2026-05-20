@@ -132,12 +132,15 @@ RunPod proxies Jupyter through a public hostname while the container sees an int
 
 The image runs `tini -s` as the entrypoint so child processes are reaped even if the container platform wraps the process tree. ComfyUI's image-local `user` path is also symlinked into `/workspace/user` because recent ComfyUI database initialization may still expect a writable `user` directory under the install path.
 
-`ENABLE_SAGE_ATTENTION=auto` adds ComfyUI's `--use-sage-attention` flag only when the `sageattention` package imports successfully. Set it to `1` to require SageAttention and fail startup if it is missing, or `0` to force ComfyUI's default attention backend.
+`ENABLE_SAGE_ATTENTION=auto` adds ComfyUI's `--use-sage-attention` flag only when the `sageattention` package imports and passes a tiny CUDA smoke test. Set it to `1` to require SageAttention and fail startup if it is missing or incompatible, or `0` to force ComfyUI's default attention backend.
+
+This prevents repeated runtime log spam on GPUs whose compute capability is not included in the installed SageAttention wheel, for example Blackwell pods using a wheel without compatible SM kernels.
 
 You can check optional accelerator availability inside a running container with:
 
 ```bash
 python /opt/scripts/check-performance-deps.py
+python /opt/scripts/check-sage-attention.py --smoke
 ```
 
 ## Model Volume Preparation
