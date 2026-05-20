@@ -45,8 +45,7 @@ Persistent RunPod paths:
 The startup script should:
 
 - create the expected `/workspace` directories,
-- symlink `/opt/ComfyUI/models` to `/workspace/models`,
-- symlink `/opt/ComfyUI/user` to `/workspace/user`,
+- symlink `/opt/ComfyUI/models`, `/opt/ComfyUI/input`, `/opt/ComfyUI/output`, and `/opt/ComfyUI/user` to the matching `/workspace` directories,
 - optionally symlink experimental custom nodes from `/workspace/custom_nodes_experimental`,
 - start ComfyUI with `/workspace/input`, `/workspace/output`, and `/workspace/user`,
 - optionally start Jupyter Lab rooted at `/workspace`.

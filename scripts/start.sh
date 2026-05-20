@@ -42,6 +42,16 @@ if [[ -L "${COMFYUI_DIR}/models" || -e "${COMFYUI_DIR}/models" ]]; then
 fi
 ln -s "${MODELS_DIR}" "${COMFYUI_DIR}/models"
 
+if [[ -L "${COMFYUI_DIR}/input" || -e "${COMFYUI_DIR}/input" ]]; then
+  rm -rf "${COMFYUI_DIR}/input"
+fi
+ln -s "${INPUT_DIR}" "${COMFYUI_DIR}/input"
+
+if [[ -L "${COMFYUI_DIR}/output" || -e "${COMFYUI_DIR}/output" ]]; then
+  rm -rf "${COMFYUI_DIR}/output"
+fi
+ln -s "${OUTPUT_DIR}" "${COMFYUI_DIR}/output"
+
 if [[ -L "${COMFYUI_DIR}/user" || -e "${COMFYUI_DIR}/user" ]]; then
   rm -rf "${COMFYUI_DIR}/user"
 fi
@@ -62,6 +72,7 @@ fi
 
 log "ComfyUI: ${COMFYUI_DIR}"
 log "Models: ${MODELS_DIR}"
+log "Input: ${INPUT_DIR}"
 log "Output: ${OUTPUT_DIR}"
 log "User data: ${USER_DIR}"
 log "Listening on ${COMFYUI_HOST}:${COMFYUI_PORT}"

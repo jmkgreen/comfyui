@@ -39,7 +39,7 @@ Persistent RunPod paths:
 /workspace/config
 ```
 
-At startup, `/opt/ComfyUI/models` is linked to `/workspace/models`, `/opt/ComfyUI/user` is linked to `/workspace/user`, and ComfyUI is started with `/workspace/input`, `/workspace/output`, and `/workspace/user`.
+At startup, `/opt/ComfyUI/models`, `/opt/ComfyUI/input`, `/opt/ComfyUI/output`, and `/opt/ComfyUI/user` are linked to the matching `/workspace` directories. ComfyUI is also started with `/workspace/input`, `/workspace/output`, and `/workspace/user`.
 
 Jupyter Lab is also installed and starts on port `8888` by default, rooted at `/workspace`.
 
