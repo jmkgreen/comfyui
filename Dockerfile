@@ -10,6 +10,7 @@ ARG CUSTOM_NODES_FILE=/opt/config/stable-custom-nodes.txt
 ARG RUN_CUSTOM_NODE_INSTALL_PY=1
 ARG INSTALL_SAGEATTENTION=1
 ARG SAGEATTENTION_WHEEL_URL=https://github.com/Comfy-Org/wheels/releases/download/sageattention-latest/sageattention-2.2.0%2Bcu128torch2.10-cp312-cp312-manylinux_2_34_x86_64.manylinux_2_35_x86_64.whl
+ARG S5CMD_VERSION=2.3.0
 ARG ONNXRUNTIME_CUDA12_INDEX=https://aiinfra.pkgs.visualstudio.com/PublicPackages/_packaging/onnxruntime-cuda-12/pypi/simple/
 
 ENV COMFYUI_DIR=/opt/ComfyUI \
@@ -48,6 +49,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       tini \
     && rm -rf /var/lib/apt/lists/*
 
+RUN curl -fsSL "https://github.com/peak/s5cmd/releases/download/v${S5CMD_VERSION}/s5cmd_${S5CMD_VERSION}_Linux-64bit.tar.gz" \
+      | tar -xz -C /usr/local/bin s5cmd \
+    && chmod +x /usr/local/bin/s5cmd \
+    && s5cmd version
+
 RUN printf '%s\n' \
       'requests>=2.32.5,<3' \
       'urllib3>=1.26.18,<3' \
@@ -61,7 +67,7 @@ RUN printf '%s\n' \
 RUN python -m venv --system-site-packages "${VENV_DIR}" \
     && "${VENV_DIR}/bin/pip" install --upgrade pip setuptools wheel \
     && "${VENV_DIR}/bin/pip" install requests urllib3 charset-normalizer chardet \
-    && "${VENV_DIR}/bin/pip" install awscli jupyterlab ipywidgets
+    && "${VENV_DIR}/bin/pip" install awscli jupyterlab ipywidgets "huggingface_hub[cli,hf_xet]"
 
 RUN git clone "${COMFYUI_REPO}" "${COMFYUI_DIR}" \
     && cd "${COMFYUI_DIR}" \
