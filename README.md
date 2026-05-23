@@ -116,6 +116,7 @@ COMFYUI_PORT=8188
 EXTRA_COMFYUI_ARGS=
 ENABLE_COMFYUI_ASSETS=1
 ENABLE_SAGE_ATTENTION=auto
+ALLOW_SAGE_ATTENTION_BLACKWELL=0
 ENABLE_EXPERIMENTAL_CUSTOM_NODES=1
 JUPYTER_ENABLE=1
 JUPYTER_PORT=8888
@@ -138,6 +139,8 @@ The image runs `tini -s` as the entrypoint so child processes are reaped even if
 `ENABLE_SAGE_ATTENTION=auto` adds ComfyUI's `--use-sage-attention` flag only when the `sageattention` package imports and passes a tiny CUDA smoke test. Set it to `1` to require SageAttention and fail startup if it is missing or incompatible, or `0` to force ComfyUI's default attention backend.
 
 This prevents repeated runtime log spam on GPUs whose compute capability is not included in the installed SageAttention wheel, for example Blackwell pods using a wheel without compatible SM kernels.
+
+Blackwell-class GPUs such as RTX PRO 4000 are skipped by default in SageAttention auto mode because partial wheel support can pass a tiny smoke test but fail later in workflow-specific kernels with `no kernel image is available for execution on the device`. Set `ALLOW_SAGE_ATTENTION_BLACKWELL=1` only when using a SageAttention wheel built with complete `sm_120` coverage for the image's exact PyTorch/CUDA/Python stack.
 
 You can check optional accelerator availability inside a running container with:
 
