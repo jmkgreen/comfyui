@@ -18,6 +18,7 @@ ENABLE_EXPERIMENTAL_CUSTOM_NODES="${ENABLE_EXPERIMENTAL_CUSTOM_NODES:-1}"
 COMFYUI_HOST="${COMFYUI_HOST:-0.0.0.0}"
 COMFYUI_PORT="${COMFYUI_PORT:-8188}"
 EXTRA_COMFYUI_ARGS="${EXTRA_COMFYUI_ARGS:-}"
+ENABLE_COMFYUI_ASSETS="${ENABLE_COMFYUI_ASSETS:-1}"
 ENABLE_SAGE_ATTENTION="${ENABLE_SAGE_ATTENTION:-auto}"
 JUPYTER_ENABLE="${JUPYTER_ENABLE:-1}"
 JUPYTER_HOST="${JUPYTER_HOST:-0.0.0.0}"
@@ -127,6 +128,21 @@ else
   log "SSH disabled with SSH_ENABLE=${SSH_ENABLE}"
 fi
 
+asset_args=()
+case "${ENABLE_COMFYUI_ASSETS}" in
+  1|true|True|TRUE)
+    asset_args+=(--enable-assets)
+    log "ComfyUI assets enabled."
+    ;;
+  0|false|False|FALSE)
+    log "ComfyUI assets disabled with ENABLE_COMFYUI_ASSETS=${ENABLE_COMFYUI_ASSETS}."
+    ;;
+  *)
+    log "ERROR: ENABLE_COMFYUI_ASSETS must be 1 or 0."
+    exit 1
+    ;;
+esac
+
 sage_attention_args=()
 case "${ENABLE_SAGE_ATTENTION}" in
   1|auto)
@@ -179,6 +195,7 @@ exec python "${COMFYUI_DIR}/main.py" \
   --input-directory "${INPUT_DIR}" \
   --output-directory "${OUTPUT_DIR}" \
   --user-directory "${USER_DIR}" \
+  "${asset_args[@]}" \
   "${sage_attention_args[@]}" \
   ${EXTRA_COMFYUI_ARGS} \
   "$@"

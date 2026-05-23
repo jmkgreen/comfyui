@@ -128,7 +128,9 @@ Requirements:
 - Use a CUDA devel base image with compiler tooling.
 - Verify the package imports during image build.
 - Add ComfyUI's `--use-sage-attention` flag automatically only when the package imports successfully.
+- Add ComfyUI's `--enable-assets` flag by default so existing `/workspace/input` and `/workspace/output` files are indexed for the Assets menu on new pod launches.
 - Provide `ENABLE_SAGE_ATTENTION=auto|1|0`.
+- Provide `ENABLE_COMFYUI_ASSETS=1|0`.
 
 `ENABLE_SAGE_ATTENTION` behavior:
 
