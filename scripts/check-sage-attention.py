@@ -34,9 +34,12 @@ def main() -> int:
     print(f"CUDA device: {device_name} sm_{capability[0]}{capability[1]}")
 
     try:
-        q = torch.randn((1, 1, 16, 64), device="cuda", dtype=torch.float16)
-        k = torch.randn((1, 1, 16, 64), device="cuda", dtype=torch.float16)
-        v = torch.randn((1, 1, 16, 64), device="cuda", dtype=torch.float16)
+        # SageAttention's CUDA kernels are block-oriented. Use a small but
+        # block-aligned shape so the smoke test resembles real model calls
+        # without consuming meaningful VRAM.
+        q = torch.randn((1, 4, 128, 64), device="cuda", dtype=torch.float16)
+        k = torch.randn((1, 4, 128, 64), device="cuda", dtype=torch.float16)
+        v = torch.randn((1, 4, 128, 64), device="cuda", dtype=torch.float16)
         out = sageattn(q, k, v, tensor_layout="HND", is_causal=False)
         torch.cuda.synchronize()
     except Exception as exc:  # noqa: BLE001 - CUDA kernel failures must disable auto mode.
