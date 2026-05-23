@@ -42,6 +42,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       libxrender1 \
       ninja-build \
       openssh-client \
+      openssh-server \
       python3-venv \
       rsync \
       tini \
@@ -80,7 +81,7 @@ RUN find "${SCRIPTS_DIR}" -maxdepth 1 -type f \( -name '*.sh' -o -name '*.py' \)
     && "${SCRIPTS_DIR}/install-custom-nodes.sh" "${CUSTOM_NODES_FILE}" \
     && python "${SCRIPTS_DIR}/repair-3d-pack-deps.py" \
     && python "${SCRIPTS_DIR}/patch-numpy2-compat.py" \
-    && mkdir -p /workspace
+    && mkdir -p /workspace /run/sshd
 
 RUN python -c "import warnings; warnings.filterwarnings('error', message='.*urllib3.*supported version.*'); import requests, urllib3; print(f'Requests: {requests.__version__}; urllib3: {urllib3.__version__}')"
 
@@ -94,7 +95,7 @@ RUN if [[ "${INSTALL_SAGEATTENTION}" == "1" ]]; then \
     fi
 
 WORKDIR ${COMFYUI_DIR}
-EXPOSE 8188 8888
+EXPOSE 22 8188 8888
 
 ENTRYPOINT ["/usr/bin/tini", "-s", "--"]
 CMD ["/opt/scripts/start.sh"]

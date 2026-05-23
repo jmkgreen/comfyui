@@ -26,6 +26,11 @@ JUPYTER_ROOT_DIR="${JUPYTER_ROOT_DIR:-${WORKSPACE_DIR}}"
 JUPYTER_TOKEN="${JUPYTER_TOKEN:-}"
 JUPYTER_ALLOW_ORIGIN="${JUPYTER_ALLOW_ORIGIN:-*}"
 JUPYTER_TRUST_XHEADERS="${JUPYTER_TRUST_XHEADERS:-1}"
+SSH_ENABLE="${SSH_ENABLE:-1}"
+SSH_PORT="${SSH_PORT:-22}"
+SSH_PUBLIC_KEY="${SSH_PUBLIC_KEY:-}"
+PUBLIC_KEY="${PUBLIC_KEY:-}"
+SSH_AUTHORIZED_KEYS_FILE="${SSH_AUTHORIZED_KEYS_FILE:-${CONFIG_DIR}/authorized_keys}"
 
 mkdir -p \
   "${MODELS_DIR}" \
@@ -76,6 +81,51 @@ log "Input: ${INPUT_DIR}"
 log "Output: ${OUTPUT_DIR}"
 log "User data: ${USER_DIR}"
 log "Listening on ${COMFYUI_HOST}:${COMFYUI_PORT}"
+
+if [[ "${SSH_ENABLE}" == "1" ]]; then
+  mkdir -p /run/sshd /root/.ssh
+  chmod 700 /root/.ssh
+
+  if [[ -n "${SSH_PUBLIC_KEY}" ]]; then
+    printf '%s\n' "${SSH_PUBLIC_KEY}" > /root/.ssh/authorized_keys
+  elif [[ -n "${PUBLIC_KEY}" ]]; then
+    printf '%s\n' "${PUBLIC_KEY}" > /root/.ssh/authorized_keys
+  elif [[ -f "${SSH_AUTHORIZED_KEYS_FILE}" ]]; then
+    cp "${SSH_AUTHORIZED_KEYS_FILE}" /root/.ssh/authorized_keys
+  fi
+
+  if [[ -f /root/.ssh/authorized_keys ]]; then
+    chmod 600 /root/.ssh/authorized_keys
+  else
+    log "SSH enabled, but no authorized keys found. Set SSH_PUBLIC_KEY, PUBLIC_KEY, or mount ${SSH_AUTHORIZED_KEYS_FILE}."
+  fi
+
+  ssh-keygen -A
+  log "Starting sshd on 0.0.0.0:${SSH_PORT}"
+  /usr/sbin/sshd \
+    -o "Port=${SSH_PORT}" \
+    -o "PermitRootLogin=prohibit-password" \
+    -o "PasswordAuthentication=no" \
+    -o "KbdInteractiveAuthentication=no" \
+    -o "ChallengeResponseAuthentication=no" \
+    -o "PubkeyAuthentication=yes" \
+    -o "PermitEmptyPasswords=no" \
+    -o "AllowUsers=root" \
+    -o "AllowAgentForwarding=no" \
+    -o "X11Forwarding=no" \
+    -o "PermitTunnel=no" \
+    -o "GatewayPorts=no" \
+    -o "LoginGraceTime=30" \
+    -o "MaxAuthTries=3" \
+    -o "MaxSessions=4" \
+    -o "KexAlgorithms=curve25519-sha256,curve25519-sha256@libssh.org" \
+    -o "HostKeyAlgorithms=ssh-ed25519" \
+    -o "PubkeyAcceptedAlgorithms=ssh-ed25519" \
+    -o "Ciphers=chacha20-poly1305@openssh.com,aes256-gcm@openssh.com,aes128-gcm@openssh.com,aes256-ctr,aes128-ctr" \
+    -o "MACs=hmac-sha2-512-etm@openssh.com,hmac-sha2-256-etm@openssh.com,umac-128-etm@openssh.com"
+else
+  log "SSH disabled with SSH_ENABLE=${SSH_ENABLE}"
+fi
 
 sage_attention_args=()
 case "${ENABLE_SAGE_ATTENTION}" in
