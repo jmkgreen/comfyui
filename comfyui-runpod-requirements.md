@@ -129,8 +129,10 @@ Requirements:
 - Verify the package imports during image build.
 - Add ComfyUI's `--use-sage-attention` flag automatically only when the package imports successfully.
 - Add ComfyUI's `--enable-assets` flag by default so existing `/workspace/input` and `/workspace/output` files are indexed for the Assets menu on new pod launches.
+- Backfill stable job IDs for legacy `/workspace/output` asset rows discovered from disk so previous-pod outputs appear in generated-asset views.
 - Provide `ENABLE_SAGE_ATTENTION=auto|1|0`.
 - Provide `ENABLE_COMFYUI_ASSETS=1|0`.
+- Provide `BACKFILL_OUTPUT_ASSET_JOBS=1|0`.
 
 `ENABLE_SAGE_ATTENTION` behavior:
 
