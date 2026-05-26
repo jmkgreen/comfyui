@@ -53,16 +53,28 @@ def wait_for_assets_api(base_url: str, timeout: int) -> None:
 
 
 def seed_outputs(base_url: str, timeout: int) -> None:
-    try:
-        result = request_json(
-            f"{base_url}/api/assets/seed?wait=true",
-            {"roots": ["output"]},
-            timeout=timeout,
-        )
-        log(f"Output asset seed completed: {result}")
-    except urllib.error.HTTPError as exc:
-        body = exc.read().decode("utf-8", "replace")
-        raise RuntimeError(f"Output asset seed failed: HTTP {exc.code}: {body}") from exc
+    deadline = time.monotonic() + timeout
+    last_conflict = ""
+
+    while time.monotonic() < deadline:
+        try:
+            result = request_json(
+                f"{base_url}/api/assets/seed?wait=true",
+                {"roots": ["output"]},
+                timeout=max(5, int(deadline - time.monotonic())),
+            )
+            log(f"Output asset seed completed: {result}")
+            return
+        except urllib.error.HTTPError as exc:
+            body = exc.read().decode("utf-8", "replace")
+            if exc.code == 409:
+                last_conflict = body
+                log("Asset scan already running; waiting before output backfill.")
+                time.sleep(5)
+                continue
+            raise RuntimeError(f"Output asset seed failed: HTTP {exc.code}: {body}") from exc
+
+    raise RuntimeError(f"Timed out waiting for output asset seed; last conflict: {last_conflict}")
 
 
 def backfill_job_ids(db_path: Path, output_dir: Path, retries: int) -> int:
