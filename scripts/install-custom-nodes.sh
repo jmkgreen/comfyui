@@ -61,4 +61,11 @@ while IFS= read -r line || [[ -n "${line}" ]]; do
   fi
 done < "${CUSTOM_NODES_FILE}"
 
+KJNODES_CUSTOM_DIMENSIONS_SRC="$(dirname "${CUSTOM_NODES_FILE}")/kjnodes-custom_dimensions.json"
+KJNODES_CUSTOM_DIMENSIONS_DST="${COMFYUI_DIR}/custom_nodes/ComfyUI-KJNodes/custom_dimensions.json"
+if [[ -f "${KJNODES_CUSTOM_DIMENSIONS_SRC}" && -d "$(dirname "${KJNODES_CUSTOM_DIMENSIONS_DST}")" ]]; then
+  log "Installing KJNodes custom dimension presets"
+  cp "${KJNODES_CUSTOM_DIMENSIONS_SRC}" "${KJNODES_CUSTOM_DIMENSIONS_DST}"
+fi
+
 log "Stable custom node installation complete."
