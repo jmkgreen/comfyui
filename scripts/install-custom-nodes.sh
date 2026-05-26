@@ -63,9 +63,25 @@ done < "${CUSTOM_NODES_FILE}"
 
 KJNODES_CUSTOM_DIMENSIONS_SRC="$(dirname "${CUSTOM_NODES_FILE}")/kjnodes-custom_dimensions.json"
 KJNODES_CUSTOM_DIMENSIONS_DST="${COMFYUI_DIR}/custom_nodes/ComfyUI-KJNodes/custom_dimensions.json"
-if [[ -f "${KJNODES_CUSTOM_DIMENSIONS_SRC}" && -d "$(dirname "${KJNODES_CUSTOM_DIMENSIONS_DST}")" ]]; then
+if [[ -d "$(dirname "${KJNODES_CUSTOM_DIMENSIONS_DST}")" ]]; then
   log "Installing KJNodes custom dimension presets"
-  cp "${KJNODES_CUSTOM_DIMENSIONS_SRC}" "${KJNODES_CUSTOM_DIMENSIONS_DST}"
+  if [[ -f "${KJNODES_CUSTOM_DIMENSIONS_SRC}" ]]; then
+    cp "${KJNODES_CUSTOM_DIMENSIONS_SRC}" "${KJNODES_CUSTOM_DIMENSIONS_DST}"
+  else
+    cat > "${KJNODES_CUSTOM_DIMENSIONS_DST}" <<'JSON'
+[
+  {"label": "Square 1:1", "value": "1024 x 1024"},
+  {"label": "Classic 5:4 landscape", "value": "1280 x 1024"},
+  {"label": "Classic 4:3 landscape", "value": "1024 x 768"},
+  {"label": "Photo 7:5 landscape", "value": "1344 x 960"},
+  {"label": "Photo 3:2 landscape", "value": "1152 x 768"},
+  {"label": "Wide 16:10 landscape", "value": "1024 x 640"},
+  {"label": "Wide 16:9 landscape", "value": "1024 x 576"},
+  {"label": "Cinema 2:1 landscape", "value": "1024 x 512"},
+  {"label": "Cinema 21:9 landscape", "value": "1344 x 576"}
+]
+JSON
+  fi
 fi
 
 log "Stable custom node installation complete."
