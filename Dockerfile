@@ -87,6 +87,7 @@ RUN find "${SCRIPTS_DIR}" -maxdepth 1 -type f \( -name '*.sh' -o -name '*.py' \)
     && "${SCRIPTS_DIR}/install-custom-nodes.sh" "${CUSTOM_NODES_FILE}" \
     && python "${SCRIPTS_DIR}/repair-3d-pack-deps.py" \
     && python "${SCRIPTS_DIR}/patch-numpy2-compat.py" \
+    && python "${SCRIPTS_DIR}/patch-legacy-output-jobs.py" \
     && mkdir -p /workspace /run/sshd
 
 RUN python -c "import warnings; warnings.filterwarnings('error', message='.*urllib3.*supported version.*'); import requests, urllib3; print(f'Requests: {requests.__version__}; urllib3: {urllib3.__version__}')"

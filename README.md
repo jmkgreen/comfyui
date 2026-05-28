@@ -115,7 +115,6 @@ Optional environment variables:
 COMFYUI_PORT=8188
 EXTRA_COMFYUI_ARGS=
 ENABLE_COMFYUI_ASSETS=1
-BACKFILL_OUTPUT_ASSET_JOBS=1
 ENABLE_SAGE_ATTENTION=auto
 ALLOW_SAGE_ATTENTION_BLACKWELL=0
 ENABLE_EXPERIMENTAL_CUSTOM_NODES=1
@@ -137,7 +136,8 @@ The image runs `tini -s` as the entrypoint so child processes are reaped even if
 
 `ENABLE_COMFYUI_ASSETS=1` starts ComfyUI with `--enable-assets` so the Assets menu scans and indexes existing files under `/workspace/input` and `/workspace/output` after a new pod launch. Set it to `0` only if you intentionally want to disable ComfyUI's asset database and background scanner.
 
-`BACKFILL_OUTPUT_ASSET_JOBS=1` waits for the Assets API, seeds `/workspace/output`, and assigns stable synthetic job IDs to legacy output assets discovered from disk. This lets previous-pod output images appear in generated-asset views that expect a prompt/job association.
+The image patches ComfyUI's local `/api/jobs` history endpoint so previous-pod files in `/workspace/output` are exposed as synthetic completed jobs. This keeps the generated-image film strip populated after a pod restart, even though ComfyUI's native job history is process-local.
+
 
 `ENABLE_SAGE_ATTENTION=auto` adds ComfyUI's `--use-sage-attention` flag only when the `sageattention` package imports and passes a tiny CUDA smoke test. Set it to `1` to require SageAttention and fail startup if it is missing or incompatible, or `0` to force ComfyUI's default attention backend.
 

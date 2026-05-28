@@ -19,7 +19,6 @@ COMFYUI_HOST="${COMFYUI_HOST:-0.0.0.0}"
 COMFYUI_PORT="${COMFYUI_PORT:-8188}"
 EXTRA_COMFYUI_ARGS="${EXTRA_COMFYUI_ARGS:-}"
 ENABLE_COMFYUI_ASSETS="${ENABLE_COMFYUI_ASSETS:-1}"
-BACKFILL_OUTPUT_ASSET_JOBS="${BACKFILL_OUTPUT_ASSET_JOBS:-1}"
 ENABLE_SAGE_ATTENTION="${ENABLE_SAGE_ATTENTION:-auto}"
 JUPYTER_ENABLE="${JUPYTER_ENABLE:-1}"
 JUPYTER_HOST="${JUPYTER_HOST:-0.0.0.0}"
@@ -134,23 +133,6 @@ case "${ENABLE_COMFYUI_ASSETS}" in
   1|true|True|TRUE)
     asset_args+=(--enable-assets)
     log "ComfyUI assets enabled."
-    case "${BACKFILL_OUTPUT_ASSET_JOBS}" in
-      1|true|True|TRUE)
-        log "Legacy output asset job backfill enabled."
-        python "${SCRIPTS_DIR:-/opt/scripts}/backfill-output-assets.py" \
-          --host "127.0.0.1" \
-          --port "${COMFYUI_PORT}" \
-          --user-dir "${USER_DIR}" \
-          --output-dir "${OUTPUT_DIR}" &
-        ;;
-      0|false|False|FALSE)
-        log "Legacy output asset job backfill disabled with BACKFILL_OUTPUT_ASSET_JOBS=${BACKFILL_OUTPUT_ASSET_JOBS}."
-        ;;
-      *)
-        log "ERROR: BACKFILL_OUTPUT_ASSET_JOBS must be 1 or 0."
-        exit 1
-        ;;
-    esac
     ;;
   0|false|False|FALSE)
     log "ComfyUI assets disabled with ENABLE_COMFYUI_ASSETS=${ENABLE_COMFYUI_ASSETS}."
