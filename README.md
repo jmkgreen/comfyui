@@ -57,6 +57,7 @@ docker build \
   --build-arg COMFYUI_MANAGER_REF=main \
   --build-arg INSTALL_SAGEATTENTION=1 \
   --build-arg SAGEATTENTION_WHEEL_URL=https://github.com/Comfy-Org/wheels/releases/download/sageattention-latest/sageattention-2.2.0%2Bcu128torch2.10-cp312-cp312-manylinux_2_34_x86_64.manylinux_2_35_x86_64.whl \
+  --build-arg ALLOW_SAGE_ATTENTION_BLACKWELL=0 \
   --build-arg ONNXRUNTIME_CUDA12_INDEX=https://aiinfra.pkgs.visualstudio.com/PublicPackages/_packaging/onnxruntime-cuda-12/pypi/simple/ \
   -t comfyui-runpod .
 ```
@@ -70,6 +71,16 @@ The venv uses system site packages so it can share the PyTorch stack from the ba
 The Dockerfile also constrains `torch`, `torchvision`, and `torchaudio` to the PyTorch 2.10 image line because the default SageAttention wheel is compiled for CUDA 12.8 and Torch 2.10. The build validates the Torch version immediately before installing SageAttention so dependency drift fails with a clear error.
 
 For a more reproducible image, set `COMFYUI_REF`, `COMFYUI_MANAGER_REF`, custom node refs, and performance package versions to known-good values instead of floating branches or defaults.
+
+## Image Tags
+
+GitHub Actions publishes separate image profiles:
+
+- `latest`: stable Ada/default profile.
+- `cu128-ada`: CUDA 12.8 / PyTorch 2.10 / Python 3.12 profile for L4, RTX 4000 Ada, and RTX 4090-class `sm_89` GPUs.
+- `cu128-blackwell-experimental`: CUDA 12.8 / PyTorch 2.10 / Python 3.12 profile for RTX PRO Blackwell `sm_120` testing.
+
+The Blackwell profile swaps only the SageAttention wheel and sets `ALLOW_SAGE_ATTENTION_BLACKWELL=1`. It uses a community prebuilt `sm_120` wheel, so treat it as experimental until an RTX PRO 4000 pod passes the startup smoke test and real workflows.
 
 ## Stable Custom Nodes
 
@@ -143,7 +154,7 @@ The image patches ComfyUI's local `/api/jobs` history endpoint so previous-pod f
 
 This prevents repeated runtime log spam on GPUs whose compute capability is not included in the installed SageAttention wheel, for example Blackwell pods using a wheel without compatible SM kernels.
 
-Blackwell-class GPUs such as RTX PRO 4000 are skipped by default in SageAttention auto mode because partial wheel support can pass a tiny smoke test but fail later in workflow-specific kernels with `no kernel image is available for execution on the device`. Set `ALLOW_SAGE_ATTENTION_BLACKWELL=1` only when using a SageAttention wheel built with complete `sm_120` coverage for the image's exact PyTorch/CUDA/Python stack.
+Blackwell-class GPUs such as RTX PRO 4000 are skipped by default in SageAttention auto mode because partial wheel support can pass a tiny smoke test but fail later in workflow-specific kernels with `no kernel image is available for execution on the device`. The `cu128-blackwell-experimental` image sets `ALLOW_SAGE_ATTENTION_BLACKWELL=1` and installs an `sm_120` wheel; set this variable manually only when using a SageAttention wheel built with complete `sm_120` coverage for the image's exact PyTorch/CUDA/Python stack.
 
 You can check optional accelerator availability inside a running container with:
 

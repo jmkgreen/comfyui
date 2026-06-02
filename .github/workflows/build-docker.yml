@@ -17,6 +17,18 @@ jobs:
     permissions:
       contents: read
       packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - profile: ada
+            tag: cu128-ada
+            allow_blackwell: "0"
+            sageattention_wheel_url: https://github.com/Comfy-Org/wheels/releases/download/sageattention-latest/sageattention-2.2.0%2Bcu128torch2.10-cp312-cp312-manylinux_2_34_x86_64.manylinux_2_35_x86_64.whl
+          - profile: blackwell
+            tag: cu128-blackwell-experimental
+            allow_blackwell: "1"
+            sageattention_wheel_url: https://huggingface.co/yo9otatara/prebuilt_wheels/resolve/main/sageattention-2.2.0%2Bcu128torch2.10.0sm120-cp312-cp312-linux_x86_64.whl
 
     steps:
       - name: Checkout code
@@ -50,17 +62,21 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=sha
-            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=${{ matrix.tag }}
+            type=ref,event=branch,suffix=-${{ matrix.profile }}
+            type=ref,event=pr,suffix=-${{ matrix.profile }}
+            type=sha,suffix=-${{ matrix.profile }}
+            type=raw,value=latest,enable=${{ matrix.profile == 'ada' && github.ref == 'refs/heads/main' }}
 
-      - name: Build Docker image
+      - name: Build Docker image (${{ matrix.profile }})
         uses: docker/build-push-action@v7
         with:
           context: .
           push: ${{ github.event_name != 'pull_request' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+          build-args: |
+            SAGEATTENTION_WHEEL_URL=${{ matrix.sageattention_wheel_url }}
+            ALLOW_SAGE_ATTENTION_BLACKWELL=${{ matrix.allow_blackwell }}
+          cache-from: type=gha,scope=${{ matrix.profile }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.profile }}

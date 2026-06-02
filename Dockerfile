@@ -10,6 +10,7 @@ ARG CUSTOM_NODES_FILE=/opt/config/stable-custom-nodes.txt
 ARG RUN_CUSTOM_NODE_INSTALL_PY=1
 ARG INSTALL_SAGEATTENTION=1
 ARG SAGEATTENTION_WHEEL_URL=https://github.com/Comfy-Org/wheels/releases/download/sageattention-latest/sageattention-2.2.0%2Bcu128torch2.10-cp312-cp312-manylinux_2_34_x86_64.manylinux_2_35_x86_64.whl
+ARG ALLOW_SAGE_ATTENTION_BLACKWELL=0
 ARG S5CMD_VERSION=2.3.0
 ARG ONNXRUNTIME_CUDA12_INDEX=https://aiinfra.pkgs.visualstudio.com/PublicPackages/_packaging/onnxruntime-cuda-12/pypi/simple/
 
@@ -20,6 +21,7 @@ ENV COMFYUI_DIR=/opt/ComfyUI \
     WORKSPACE_DIR=/workspace \
     CUDA_HOME=/usr/local/cuda \
     ONNXRUNTIME_CUDA12_INDEX=${ONNXRUNTIME_CUDA12_INDEX} \
+    ALLOW_SAGE_ATTENTION_BLACKWELL=${ALLOW_SAGE_ATTENTION_BLACKWELL} \
     TINI_SUBREAPER=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1 \
