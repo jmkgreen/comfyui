@@ -19,6 +19,7 @@ COMFYUI_HOST="${COMFYUI_HOST:-0.0.0.0}"
 COMFYUI_PORT="${COMFYUI_PORT:-8188}"
 EXTRA_COMFYUI_ARGS="${EXTRA_COMFYUI_ARGS:-}"
 ENABLE_COMFYUI_ASSETS="${ENABLE_COMFYUI_ASSETS:-1}"
+COMFYUI_PREVIEW_METHOD="${COMFYUI_PREVIEW_METHOD:-auto}"
 ENABLE_SAGE_ATTENTION="${ENABLE_SAGE_ATTENTION:-auto}"
 JUPYTER_ENABLE="${JUPYTER_ENABLE:-1}"
 JUPYTER_HOST="${JUPYTER_HOST:-0.0.0.0}"
@@ -143,6 +144,18 @@ case "${ENABLE_COMFYUI_ASSETS}" in
     ;;
 esac
 
+preview_args=()
+case "${COMFYUI_PREVIEW_METHOD}" in
+  auto|latent2rgb|taesd|none)
+    preview_args+=(--preview-method "${COMFYUI_PREVIEW_METHOD}")
+    log "ComfyUI latent previews set to ${COMFYUI_PREVIEW_METHOD}."
+    ;;
+  *)
+    log "ERROR: COMFYUI_PREVIEW_METHOD must be auto, latent2rgb, taesd, or none."
+    exit 1
+    ;;
+esac
+
 sage_attention_args=()
 case "${ENABLE_SAGE_ATTENTION}" in
   1|auto)
@@ -196,6 +209,7 @@ exec python "${COMFYUI_DIR}/main.py" \
   --output-directory "${OUTPUT_DIR}" \
   --user-directory "${USER_DIR}" \
   "${asset_args[@]}" \
+  "${preview_args[@]}" \
   "${sage_attention_args[@]}" \
   ${EXTRA_COMFYUI_ARGS} \
   "$@"

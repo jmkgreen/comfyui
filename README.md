@@ -126,6 +126,7 @@ Optional environment variables:
 COMFYUI_PORT=8188
 EXTRA_COMFYUI_ARGS=
 ENABLE_COMFYUI_ASSETS=1
+COMFYUI_PREVIEW_METHOD=auto
 ENABLE_SAGE_ATTENTION=auto
 ALLOW_SAGE_ATTENTION_BLACKWELL=0
 ENABLE_EXPERIMENTAL_CUSTOM_NODES=1
@@ -146,6 +147,8 @@ RunPod proxies Jupyter through a public hostname while the container sees an int
 The image runs `tini -s` as the entrypoint so child processes are reaped even if the container platform wraps the process tree. ComfyUI's image-local `user` path is also symlinked into `/workspace/user` because recent ComfyUI database initialization may still expect a writable `user` directory under the install path.
 
 `ENABLE_COMFYUI_ASSETS=1` starts ComfyUI with `--enable-assets` so the Assets menu scans and indexes existing files under `/workspace/input` and `/workspace/output` after a new pod launch. Set it to `0` only if you intentionally want to disable ComfyUI's asset database and background scanner.
+
+`COMFYUI_PREVIEW_METHOD=auto` starts ComfyUI with `--preview-method auto` so KSampler nodes stream latent previews while generating. This makes it easier to spot bad generations early and abort before the workflow finishes. Valid values are `auto`, `latent2rgb`, `taesd`, and `none`.
 
 The image patches ComfyUI's local `/api/jobs` history endpoint so previous-pod files in `/workspace/output` are exposed as synthetic completed jobs. This keeps the generated-image film strip populated after a pod restart, even though ComfyUI's native job history is process-local.
 
