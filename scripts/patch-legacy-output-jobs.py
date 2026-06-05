@@ -23,9 +23,12 @@ HELPER_CODE = r'''
 
 # LEGACY_OUTPUT_JOBS_PATCH_START
 import os as _legacy_os
+import json as _legacy_json
 import uuid as _legacy_uuid
 
 import folder_paths as _legacy_folder_paths
+from PIL import Image as _legacy_Image
+from PIL import UnidentifiedImageError as _legacy_UnidentifiedImageError
 
 _LEGACY_OUTPUT_NAMESPACE = _legacy_uuid.UUID("5a045ea2-7de1-4a08-bf52-2a8f4a7b4c71")
 _LEGACY_IMAGE_EXTENSIONS = frozenset({".bmp", ".gif", ".jpeg", ".jpg", ".png", ".tif", ".tiff", ".webp"})
@@ -96,6 +99,57 @@ def _legacy_output_item(abs_path: str, output_dir: str) -> tuple[str, dict, int]
     return media_type, item, int(stat.st_mtime * 1000)
 
 
+def _legacy_json_metadata(value, default=None):
+    if value is None:
+        return default
+    if isinstance(value, (dict, list)):
+        return value
+    if isinstance(value, str):
+        try:
+            return _legacy_json.loads(value)
+        except Exception:
+            return default
+    return default
+
+
+def _legacy_image_metadata(abs_path: str) -> tuple[dict, dict]:
+    prompt = {}
+    extra_pnginfo = {}
+
+    try:
+        with _legacy_Image.open(abs_path) as image:
+            info = dict(image.info)
+    except (_legacy_UnidentifiedImageError, OSError):
+        return prompt, extra_pnginfo
+
+    prompt = _legacy_json_metadata(info.get("prompt"), {}) or {}
+
+    for key, value in info.items():
+        if key == "prompt":
+            continue
+        parsed = _legacy_json_metadata(value)
+        if parsed is not None:
+            extra_pnginfo[key] = parsed
+
+    return prompt, extra_pnginfo
+
+
+def _legacy_file_workflow(abs_path: str, media_type: str, create_time: int) -> dict:
+    prompt = {}
+    extra_pnginfo = {}
+    if media_type == "images":
+        prompt, extra_pnginfo = _legacy_image_metadata(abs_path)
+
+    extra_data = {"create_time": create_time}
+    if extra_pnginfo:
+        extra_data["extra_pnginfo"] = extra_pnginfo
+
+    return {
+        "prompt": prompt,
+        "extra_data": extra_data,
+    }
+
+
 def _legacy_output_jobs(history: dict) -> list[dict]:
     output_dir = _legacy_folder_paths.get_output_directory()
     if not output_dir or not _legacy_os.path.isdir(output_dir):
@@ -137,6 +191,8 @@ def _legacy_output_job_by_id(prompt_id: str, history: dict) -> Optional[dict]:
     for job in _legacy_output_jobs(history):
         if job["id"] == prompt_id:
             output = job["preview_output"]
+            output_dir = _legacy_folder_paths.get_output_directory()
+            abs_path = _legacy_os.path.join(output_dir, output.get("subfolder", "") or "", output["filename"])
             return {
                 **job,
                 "outputs": {
@@ -151,7 +207,7 @@ def _legacy_output_job_by_id(prompt_id: str, history: dict) -> Optional[dict]:
                     }
                 },
                 "execution_status": {"status_str": "success", "messages": []},
-                "workflow": {"prompt": {}, "extra_data": {"create_time": job["create_time"]}},
+                "workflow": _legacy_file_workflow(abs_path, output["mediaType"], job["create_time"]),
             }
     return None
 # LEGACY_OUTPUT_JOBS_PATCH_END
